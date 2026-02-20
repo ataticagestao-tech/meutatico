@@ -3,12 +3,11 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime,
-    ForeignKey, Integer, String, Text,
+    ForeignKey, Integer, JSON, String, Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class Task(Base):
@@ -24,7 +23,7 @@ class Task(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
     description = Column(Text)
 
@@ -35,12 +34,12 @@ class Task(Base):
     # Classificação
     priority = Column(String(20), nullable=False, default="medium")
     category = Column(String(100))
-    tags = Column(ARRAY(Text), default=[])
+    tags = Column(JSON, default=[])
 
     # Relacionamentos
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"))
-    ticket_id = Column(UUID(as_uuid=True), ForeignKey("tickets.id"))
-    assigned_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    client_id = Column(GUID, ForeignKey("clients.id"))
+    ticket_id = Column(GUID, ForeignKey("tickets.id"))
+    assigned_user_id = Column(GUID, ForeignKey("users.id"))
 
     # Datas
     due_date = Column(DateTime(timezone=True))
@@ -49,14 +48,14 @@ class Task(Base):
 
     # Recorrência
     is_recurring = Column(Boolean, nullable=False, default=False)
-    recurrence_rule = Column(JSONB)
-    parent_task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"))
+    recurrence_rule = Column(JSON)
+    parent_task_id = Column(GUID, ForeignKey("tasks.id"))
 
     # Checklist embutido
-    checklist = Column(JSONB, default=[])
+    checklist = Column(JSON, default=[])
 
     # Metadados
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -75,13 +74,13 @@ class Task(Base):
 class TaskTemplate(Base):
     __tablename__ = "task_templates"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     description = Column(Text)
     trigger_event = Column(String(100))
-    tasks_config = Column(JSONB, nullable=False, default=[])
+    tasks_config = Column(JSON, nullable=False, default=[])
     is_active = Column(Boolean, nullable=False, default=True)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

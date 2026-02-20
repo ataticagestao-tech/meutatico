@@ -3,24 +3,23 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime,
-    ForeignKey, Integer, String, Text,
+    ForeignKey, Integer, JSON, String, Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class KnowledgeBaseCategory(Base):
     __tablename__ = "knowledge_base_categories"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     icon = Column(String(50))
     parent_category_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("knowledge_base_categories.id"),
     )
     sort_order = Column(Integer, nullable=False, default=0)
@@ -54,9 +53,9 @@ class KnowledgeBaseArticle(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     category_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("knowledge_base_categories.id"),
     )
     title = Column(String(500), nullable=False)
@@ -67,7 +66,7 @@ class KnowledgeBaseArticle(Base):
     body = Column(Text)
     video_url = Column(Text)
     video_thumbnail_url = Column(Text)
-    attachments = Column(JSONB, default=[])
+    attachments = Column(JSON, default=[])
 
     # Gestão
     status = Column(String(20), nullable=False, default="draft")
@@ -76,15 +75,15 @@ class KnowledgeBaseArticle(Base):
     visibility = Column(String(20), nullable=False, default="internal")
 
     # Relacionamentos
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"))
-    tags = Column(ARRAY(Text), default=[])
+    client_id = Column(GUID, ForeignKey("clients.id"))
+    tags = Column(JSON, default=[])
 
     # Versionamento
     version = Column(Integer, nullable=False, default=1)
-    last_edited_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    last_edited_by = Column(GUID, ForeignKey("users.id"))
 
     # Metadados
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

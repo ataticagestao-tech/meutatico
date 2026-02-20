@@ -3,12 +3,11 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime,
-    ForeignKey, Integer, String, Text,
+    ForeignKey, Integer, JSON, String, Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class Ticket(Base):
@@ -32,7 +31,7 @@ class Ticket(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     ticket_number = Column(Integer, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text)
@@ -49,11 +48,11 @@ class Ticket(Base):
     source = Column(String(20), nullable=False, default="internal")
 
     # Relacionamentos
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"))
-    requester_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    client_id = Column(GUID, ForeignKey("clients.id"))
+    requester_user_id = Column(GUID, ForeignKey("users.id"))
     requester_name = Column(String(255))
     requester_email = Column(String(255))
-    assigned_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    assigned_user_id = Column(GUID, ForeignKey("users.id"))
 
     # SLA
     due_date = Column(DateTime(timezone=True))
@@ -61,8 +60,8 @@ class Ticket(Base):
     closed_at = Column(DateTime(timezone=True))
 
     # Metadados
-    tags = Column(ARRAY(Text), default=[])
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    tags = Column(JSON, default=[])
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -82,17 +81,17 @@ class Ticket(Base):
 class TicketMessage(Base):
     __tablename__ = "ticket_messages"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     ticket_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("tickets.id", ondelete="CASCADE"),
         nullable=False,
     )
-    author_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    author_user_id = Column(GUID, ForeignKey("users.id"))
     author_name = Column(String(255))
     content = Column(Text, nullable=False)
     is_internal_note = Column(Boolean, nullable=False, default=False)
-    attachments = Column(JSONB, default=[])
+    attachments = Column(JSON, default=[])
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

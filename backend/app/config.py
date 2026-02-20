@@ -9,12 +9,9 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/tatica_gestap"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./tatica_gestap.db"
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
-
-    # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
 
     # JWT
     JWT_SECRET_KEY: str = "dev-secret-key-change-in-production-min-32-chars!!"

@@ -3,26 +3,25 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     BigInteger, CheckConstraint, Column, DateTime,
-    ForeignKey, Integer, String, Text,
+    ForeignKey, Integer, JSON, String, Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class DocumentFolder(Base):
     __tablename__ = "document_folders"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     parent_folder_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("document_folders.id"),
     )
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"))
+    client_id = Column(GUID, ForeignKey("clients.id"))
     color = Column(String(7), default="#6B7280")
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -45,9 +44,9 @@ class Document(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    folder_id = Column(UUID(as_uuid=True), ForeignKey("document_folders.id"))
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"))
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    folder_id = Column(GUID, ForeignKey("document_folders.id"))
+    client_id = Column(GUID, ForeignKey("clients.id"))
 
     # Arquivo
     name = Column(String(500), nullable=False)
@@ -58,17 +57,17 @@ class Document(Base):
 
     # Metadados
     description = Column(Text)
-    tags = Column(ARRAY(Text), default=[])
+    tags = Column(JSON, default=[])
 
     # Gestão
     status = Column(String(20), nullable=False, default="active")
 
     # Versionamento
     version = Column(Integer, nullable=False, default=1)
-    previous_version_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"))
+    previous_version_id = Column(GUID, ForeignKey("documents.id"))
 
     # Metadados
-    uploaded_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    uploaded_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

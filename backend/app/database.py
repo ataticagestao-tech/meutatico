@@ -1,15 +1,54 @@
+import uuid as uuid_module
+
+from sqlalchemy import JSON, String, TypeDecorator, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text
 
 from app.config import settings
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    echo=settings.DEBUG,
-)
+
+# ── Tipos compatíveis com SQLite ──────────────────
+
+class GUID(TypeDecorator):
+    """UUID armazenado como String(36) no SQLite."""
+    impl = String(36)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return str(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            try:
+                return uuid_module.UUID(str(value))
+            except (ValueError, AttributeError):
+                return value
+        return value
+
+
+# ── Engine e Session ──────────────────────────────
+
+engine_kwargs = {"echo": settings.DEBUG}
+
+if settings.DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs["pool_size"] = settings.DATABASE_POOL_SIZE
+    engine_kwargs["max_overflow"] = settings.DATABASE_MAX_OVERFLOW
+
+engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Habilita foreign keys no SQLite."""
+    if settings.DATABASE_URL.startswith("sqlite"):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
 
 async_session_factory = async_sessionmaker(
     engine,
@@ -36,16 +75,10 @@ async def get_db() -> AsyncSession:
 
 
 async def set_tenant_schema(session: AsyncSession, schema_name: str) -> None:
-    """Define o search_path do PostgreSQL para o schema do tenant."""
-    safe_schema = schema_name.replace('"', "").replace("'", "").replace(";", "")
-    if safe_schema != schema_name:
-        raise ValueError("Invalid tenant schema name")
-    await session.execute(text(f'SET search_path TO "{safe_schema}", public'))
+    """No-op para SQLite (sem schemas)."""
+    pass
 
 
 async def create_schema(session: AsyncSession, schema_name: str) -> None:
-    """Cria um novo schema no PostgreSQL."""
-    safe_schema = schema_name.replace('"', "").replace("'", "").replace(";", "")
-    if safe_schema != schema_name:
-        raise ValueError("Invalid schema name")
-    await session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{safe_schema}"'))
+    """No-op para SQLite (sem schemas)."""
+    pass

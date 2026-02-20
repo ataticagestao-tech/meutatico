@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-import redis.asyncio as aioredis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -99,15 +98,7 @@ class AuthService:
         if not payload or payload.get("type") != "refresh":
             raise UnauthorizedException("Refresh token inválido")
 
-        # Verifica se não está na blacklist (Redis)
-        try:
-            redis_client = aioredis.from_url(settings.REDIS_URL)
-            is_blacklisted = await redis_client.get(f"blacklist:{refresh_token_str}")
-            await redis_client.aclose()
-            if is_blacklisted:
-                raise UnauthorizedException("Token revogado")
-        except Exception:
-            pass  # Se Redis indisponível, continua sem blacklist
+        # Blacklist desabilitada (sem Redis no modo SQLite local)
 
         token_data = {
             "sub": payload.get("sub"),
@@ -121,14 +112,8 @@ class AuthService:
         return {"access_token": new_access}
 
     async def logout(self, refresh_token_str: str) -> None:
-        """Invalida o refresh token (blacklist no Redis)."""
-        try:
-            redis_client = aioredis.from_url(settings.REDIS_URL)
-            ttl = settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 86400
-            await redis_client.setex(f"blacklist:{refresh_token_str}", ttl, "1")
-            await redis_client.aclose()
-        except Exception:
-            pass  # Se Redis indisponível, logout parcial
+        """Logout (sem Redis, apenas invalida no client-side)."""
+        pass
 
     async def super_admin_login(self, email: str, password: str) -> dict:
         """Login do SuperAdmin."""

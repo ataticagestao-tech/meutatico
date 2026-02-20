@@ -1,18 +1,16 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import GUID, Base
 
 
 class Plan(Base):
     __tablename__ = "plans"
-    __table_args__ = {"schema": "public"}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     slug = Column(String(100), unique=True, nullable=False)
     description = Column(Text)
@@ -21,7 +19,7 @@ class Plan(Base):
     max_storage_gb = Column(Integer, nullable=False, default=5)
     max_clients = Column(Integer)  # NULL = ilimitado
     is_active = Column(Boolean, nullable=False, default=True)
-    features = Column(JSONB, default={})
+    features = Column(JSON, default={})
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -40,16 +38,15 @@ class Plan(Base):
 
 class PlanModule(Base):
     __tablename__ = "plan_modules"
-    __table_args__ = {"schema": "public"}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     plan_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("public.plans.id", ondelete="CASCADE"),
+        GUID,
+        ForeignKey("plans.id", ondelete="CASCADE"),
         nullable=False,
     )
     module_key = Column(String(100), nullable=False)
     is_enabled = Column(Boolean, nullable=False, default=True)
-    config = Column(JSONB, default={})
+    config = Column(JSON, default={})
 
     plan = relationship("Plan", back_populates="modules")

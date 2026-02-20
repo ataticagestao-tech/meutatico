@@ -3,12 +3,11 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, Date, DateTime,
-    ForeignKey, Numeric, String, Text,
+    ForeignKey, JSON, Numeric, String, Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class Client(Base):
@@ -24,7 +23,7 @@ class Client(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     company_name = Column(String(255), nullable=False)
     trade_name = Column(String(255))
     document_type = Column(String(4), nullable=False, default="CNPJ")
@@ -44,7 +43,7 @@ class Client(Base):
 
     # Gestão
     status = Column(String(20), nullable=False, default="active")
-    responsible_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    responsible_user_id = Column(GUID, ForeignKey("users.id"))
     contracted_plan = Column(String(100))
     contract_start_date = Column(Date)
     contract_end_date = Column(Date)
@@ -52,12 +51,12 @@ class Client(Base):
 
     # Informações adicionais
     tax_regime = Column(String(50))
-    systems_used = Column(ARRAY(Text), default=[])
+    systems_used = Column(JSON, default=[])
     notes = Column(Text)
-    tags = Column(ARRAY(Text), default=[])
+    tags = Column(JSON, default=[])
 
     # Metadados
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -78,9 +77,9 @@ class Client(Base):
 class ClientContact(Base):
     __tablename__ = "client_contacts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     client_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("clients.id", ondelete="CASCADE"),
         nullable=False,
     )

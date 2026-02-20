@@ -1,17 +1,15 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 
-from app.database import Base
+from app.database import GUID, Base
 
 
 class SuperAdmin(Base):
     __tablename__ = "super_admins"
-    __table_args__ = {"schema": "public"}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
@@ -32,9 +30,8 @@ class SuperAdmin(Base):
 
 class GlobalModule(Base):
     __tablename__ = "global_modules"
-    __table_args__ = {"schema": "public"}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     key = Column(String(100), unique=True, nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -50,16 +47,15 @@ class GlobalModule(Base):
 
 class AuditLogGlobal(Base):
     __tablename__ = "audit_log_global"
-    __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     actor_type = Column(String(20), nullable=False)
-    actor_id = Column(UUID(as_uuid=True))
+    actor_id = Column(GUID)
     action = Column(String(100), nullable=False)
     entity_type = Column(String(100))
-    entity_id = Column(UUID(as_uuid=True))
-    details = Column(JSONB, default={})
-    ip_address = Column(INET)
+    entity_id = Column(GUID)
+    details = Column(JSON, default={})
+    ip_address = Column(String(45))
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

@@ -4,7 +4,7 @@ Uso: python seed.py
 """
 import asyncio
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
@@ -13,10 +13,60 @@ from app.core.utils import schema_name_from_slug
 from app.models.public.plan import Plan, PlanModule
 from app.models.public.super_admin import GlobalModule, SuperAdmin
 from app.models.public.tenant import Tenant
-from app.services.tenant_service import TENANT_SCHEMA_SQL, TENANT_SEED_SQL
+from app.models.tenant.permission import Permission
+from app.models.tenant.role import Role, RolePermission
+from app.models.tenant.user import User, UserRole
 
-engine = create_async_engine(settings.DATABASE_URL)
+engine_kwargs = {}
+if settings.DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+PERMISSIONS_DATA = [
+    ("clients", "create", "Criar clientes"),
+    ("clients", "read", "Visualizar clientes"),
+    ("clients", "update", "Editar clientes"),
+    ("clients", "delete", "Excluir clientes"),
+    ("clients", "export", "Exportar clientes"),
+    ("tickets", "create", "Criar solicitações"),
+    ("tickets", "read", "Visualizar solicitações"),
+    ("tickets", "update", "Editar solicitações"),
+    ("tickets", "delete", "Excluir solicitações"),
+    ("tickets", "assign", "Atribuir solicitações"),
+    ("tickets", "manage", "Gerenciar todas as solicitações"),
+    ("tasks", "create", "Criar tarefas"),
+    ("tasks", "read", "Visualizar tarefas"),
+    ("tasks", "update", "Editar tarefas"),
+    ("tasks", "delete", "Excluir tarefas"),
+    ("tasks", "manage", "Gerenciar todas as tarefas"),
+    ("knowledge_base", "create", "Criar artigos"),
+    ("knowledge_base", "read", "Visualizar artigos"),
+    ("knowledge_base", "update", "Editar artigos"),
+    ("knowledge_base", "delete", "Excluir artigos"),
+    ("knowledge_base", "publish", "Publicar artigos"),
+    ("documents", "create", "Fazer upload de documentos"),
+    ("documents", "read", "Visualizar documentos"),
+    ("documents", "update", "Editar documentos"),
+    ("documents", "delete", "Excluir documentos"),
+    ("documents", "manage_folders", "Gerenciar pastas"),
+    ("users", "create", "Criar usuários"),
+    ("users", "read", "Visualizar usuários"),
+    ("users", "update", "Editar usuários"),
+    ("users", "delete", "Desativar usuários"),
+    ("roles", "manage", "Gerenciar cargos e permissões"),
+    ("settings", "manage", "Gerenciar configurações do tenant"),
+]
+
+ROLES_DATA = [
+    ("Administrador", "admin", "Acesso total ao sistema do tenant", True, "#DC2626"),
+    ("Gestor", "manager", "Gerencia equipes, clientes e relatórios", True, "#2563EB"),
+    ("Analista", "analyst", "Operacional - executa tarefas e atende solicitações", True, "#059669"),
+    ("Estagiário", "intern", "Acesso limitado para aprendizado", True, "#D97706"),
+    ("Visualizador", "viewer", "Apenas visualização", True, "#6B7280"),
+]
 
 
 async def seed():
@@ -113,7 +163,52 @@ async def seed():
 
         await db.flush()
 
-        # ── 4. Tenant Tatica Gestap ──────────────────
+        # ── 4. Permissões ────────────────────────────
+        perm_ids = {}
+        for module_key, action, description in PERMISSIONS_DATA:
+            existing = await db.execute(
+                select(Permission).where(
+                    Permission.module_key == module_key,
+                    Permission.action == action,
+                )
+            )
+            perm = existing.scalar_one_or_none()
+            if not perm:
+                perm = Permission(module_key=module_key, action=action, description=description)
+                db.add(perm)
+                await db.flush()
+            perm_ids[f"{module_key}.{action}"] = perm.id
+        print(f"[+] {len(perm_ids)} permissões configuradas")
+
+        # ── 5. Roles ─────────────────────────────────
+        role_ids = {}
+        for name, slug, desc, is_system, color in ROLES_DATA:
+            existing = await db.execute(select(Role).where(Role.slug == slug))
+            role = existing.scalar_one_or_none()
+            if not role:
+                role = Role(name=name, slug=slug, description=desc, is_system=is_system, color=color)
+                db.add(role)
+                await db.flush()
+            role_ids[slug] = role.id
+        print(f"[+] {len(role_ids)} roles configurados")
+
+        # Atribui todas as permissões ao role admin
+        admin_role_id = role_ids.get("admin")
+        if admin_role_id:
+            for perm_key, perm_id in perm_ids.items():
+                existing = await db.execute(
+                    select(RolePermission).where(
+                        RolePermission.role_id == admin_role_id,
+                        RolePermission.permission_id == perm_id,
+                    )
+                )
+                if not existing.scalar_one_or_none():
+                    db.add(RolePermission(role_id=admin_role_id, permission_id=perm_id))
+            print("[+] Todas as permissões atribuídas ao role Admin")
+
+        await db.flush()
+
+        # ── 6. Tenant Tatica Gestap ──────────────────
         enterprise_plan_id = plan_ids.get("enterprise")
         if not enterprise_plan_id:
             result = await db.execute(select(Plan).where(Plan.slug == "enterprise"))
@@ -138,46 +233,20 @@ async def seed():
             db.add(tenant)
             await db.flush()
 
-            # Cria schema
-            await db.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
-
-            # Cria tabelas do tenant
-            for statement in TENANT_SCHEMA_SQL.format(schema=schema_name).split(";"):
-                stmt = statement.strip()
-                if stmt:
-                    await db.execute(text(stmt))
-
-            # Seed: permissões e roles
-            for statement in TENANT_SEED_SQL.format(schema=schema_name).split(";"):
-                stmt = statement.strip()
-                if stmt and not stmt.startswith("--"):
-                    await db.execute(text(stmt))
-
-            # Cria admin user
+            # Cria admin user do tenant (usa ORM, sem raw SQL)
             password_hash = hash_password("TrocaR@123!")
-            admin_result = await db.execute(
-                text(f"""
-                    INSERT INTO "{schema_name}".users (tenant_id, name, email, password_hash)
-                    VALUES (:tenant_id, :name, :email, :password_hash)
-                    RETURNING id
-                """),
-                {
-                    "tenant_id": str(tenant.id),
-                    "name": "Administrador",
-                    "email": "admin@taticagestap.com.br",
-                    "password_hash": password_hash,
-                },
+            admin_user = User(
+                tenant_id=tenant.id,
+                name="Administrador",
+                email="admin@taticagestap.com.br",
+                password_hash=password_hash,
             )
-            admin_id = admin_result.scalar_one()
+            db.add(admin_user)
+            await db.flush()
 
-            # Atribui role admin
-            await db.execute(
-                text(f"""
-                    INSERT INTO "{schema_name}".user_roles (user_id, role_id)
-                    SELECT :user_id, id FROM "{schema_name}".roles WHERE slug = 'admin'
-                """),
-                {"user_id": str(admin_id)},
-            )
+            # Atribui role admin ao user
+            if admin_role_id:
+                db.add(UserRole(user_id=admin_user.id, role_id=admin_role_id))
 
             print(f"[+] Tenant criado: Tatica Gestap ({schema_name})")
             print("[+] Admin do tenant: admin@taticagestap.com.br / TrocaR@123!")

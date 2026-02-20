@@ -1,18 +1,17 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, JSON, String
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.database import Base, GUID
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(GUID, nullable=False)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
@@ -21,7 +20,7 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     last_login_at = Column(DateTime(timezone=True))
     settings = Column(
-        JSONB,
+        JSON,
         default={"theme": "system", "notifications_email": True},
     )
     created_at = Column(
@@ -43,12 +42,12 @@ class UserRole(Base):
     __tablename__ = "user_roles"
 
     user_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     )
     role_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("roles.id", ondelete="CASCADE"),
         primary_key=True,
     )
@@ -57,7 +56,7 @@ class UserRole(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
-    assigned_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    assigned_by = Column(GUID, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="user_roles", foreign_keys=[user_id])
     role = relationship("Role", back_populates="role_users")
