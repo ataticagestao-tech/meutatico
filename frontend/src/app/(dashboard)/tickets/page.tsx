@@ -49,11 +49,11 @@ export default function TicketsPage() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newSubject, setNewSubject] = useState("");
+  const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newPriority, setNewPriority] = useState<string>("medium");
   const [newClientId, setNewClientId] = useState("");
-  const [newAssignedTo, setNewAssignedTo] = useState("");
+  const [newAssignedUserId, setNewAssignedUserId] = useState("");
 
   // Data for selects
   const [clients, setClients] = useState<Client[]>([]);
@@ -71,12 +71,12 @@ export default function TicketsPage() {
       if (statusFilter) params.set("status", statusFilter);
       if (priorityFilter) params.set("priority", priorityFilter);
       if (clientFilter) params.set("client_id", clientFilter);
-      if (assignedFilter) params.set("assigned_to", assignedFilter);
+      if (assignedFilter) params.set("assigned_user_id", assignedFilter);
 
       const { data } = await api.get<PaginatedResponse<Ticket>>(
         `/tickets?${params.toString()}`
       );
-      setTickets(data.data);
+      setTickets(data.items);
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (err) {
@@ -91,21 +91,21 @@ export default function TicketsPage() {
   useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, priorityFilter, clientFilter, assignedFilter]);
 
   useEffect(() => {
-    api.get("/clients?per_page=200").then((r: any) => setClients(r.data.data ?? [])).catch(() => {});
-    api.get("/users").then((r: any) => setUsers(r.data.data ?? r.data ?? [])).catch(() => {});
+    api.get("/clients?per_page=100").then((r: any) => setClients(r.data.items ?? [])).catch(() => {});
+    api.get("/users").then((r: any) => setUsers(r.data.items ?? r.data ?? [])).catch(() => {});
   }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!newSubject || !newClientId) return;
+    if (!newTitle || !newClientId) return;
     setCreating(true);
     try {
       const payload: TicketCreateRequest = {
-        subject: newSubject,
+        title: newTitle,
         description: newDescription,
         priority: newPriority as TicketCreateRequest["priority"],
         client_id: newClientId,
-        assigned_to: newAssignedTo || undefined,
+        assigned_user_id: newAssignedUserId || undefined,
       };
       await api.post("/tickets", payload);
       setShowModal(false);
@@ -119,11 +119,11 @@ export default function TicketsPage() {
   }
 
   function resetForm() {
-    setNewSubject("");
+    setNewTitle("");
     setNewDescription("");
     setNewPriority("medium");
     setNewClientId("");
-    setNewAssignedTo("");
+    setNewAssignedUserId("");
   }
 
   const inputClass =
@@ -217,9 +217,9 @@ export default function TicketsPage() {
                     onClick={() => router.push(`/tickets/${ticket.id}`)}
                     className="hover:bg-background-secondary cursor-pointer transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm font-mono text-foreground-tertiary">#{ticket.number}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-foreground-tertiary">#{ticket.ticket_number}</td>
                     <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-foreground-primary truncate max-w-xs">{ticket.subject}</p>
+                      <p className="text-sm font-medium text-foreground-primary truncate max-w-xs">{ticket.title}</p>
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground-secondary">{ticket.client_name}</td>
                     <td className="px-4 py-3">
@@ -232,7 +232,7 @@ export default function TicketsPage() {
                         {STATUS_LABELS[ticket.status] || ticket.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground-secondary">{ticket.assigned_name || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-foreground-secondary">{ticket.assigned_user_name || "—"}</td>
                     <td className="px-4 py-3 text-sm text-foreground-secondary">{formatDateTime(ticket.created_at)}</td>
                   </tr>
                 ))
@@ -295,7 +295,7 @@ export default function TicketsPage() {
             <form onSubmit={handleCreate} className="p-5 space-y-4">
               <div>
                 <label className={labelClass}>Titulo *</label>
-                <input type="text" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} placeholder="Titulo da solicitacao" className={inputClass} />
+                <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Titulo da solicitacao" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Descricao</label>
@@ -312,7 +312,7 @@ export default function TicketsPage() {
                 </div>
                 <div>
                   <label className={labelClass}>Responsavel</label>
-                  <select value={newAssignedTo} onChange={(e) => setNewAssignedTo(e.target.value)} className={`${selectClass} w-full`}>
+                  <select value={newAssignedUserId} onChange={(e) => setNewAssignedUserId(e.target.value)} className={`${selectClass} w-full`}>
                     <option value="">Selecione...</option>
                     {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
@@ -331,7 +331,7 @@ export default function TicketsPage() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" disabled={creating || !newSubject || !newClientId}
+                <button type="submit" disabled={creating || !newTitle || !newClientId}
                   className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
                 >
                   <Plus size={16} />

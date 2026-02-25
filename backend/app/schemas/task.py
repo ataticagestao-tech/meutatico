@@ -86,6 +86,11 @@ class TaskTemplateCreate(BaseModel):
     is_active: bool = True
 
 
+class TaskTemplateApply(BaseModel):
+    client_id: UUID | None = None
+    assigned_user_id: UUID | None = None
+
+
 class TaskTemplateResponse(BaseModel):
     id: UUID
     name: str

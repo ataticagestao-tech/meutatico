@@ -42,7 +42,7 @@ export default function SettingsRolesPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/roles");
-      setRoles((data as any).data ?? data ?? []);
+      setRoles((data as any).items ?? data ?? []);
     } catch (err) {
       console.error("Failed to fetch roles:", err);
     } finally {
@@ -54,7 +54,7 @@ export default function SettingsRolesPage() {
 
   useEffect(() => {
     api.get("/permissions").then((r: any) => {
-      setAllPermissions(r.data.data ?? r.data ?? []);
+      setAllPermissions(r.data.items ?? r.data ?? []);
     }).catch(() => {});
   }, []);
 

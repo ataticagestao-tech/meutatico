@@ -85,7 +85,7 @@ export default function KnowledgeBasePage() {
       if (selectedCategory) params.set("category_id", selectedCategory);
 
       const { data } = await api.get(`/knowledge-base/articles?${params.toString()}`);
-      setArticles((data as any).data ?? data ?? []);
+      setArticles((data as any).items ?? data ?? []);
     } catch (err) {
       console.error("Failed to fetch articles:", err);
     } finally {
@@ -97,7 +97,7 @@ export default function KnowledgeBasePage() {
 
   useEffect(() => {
     api.get("/knowledge-base/categories").then((r: any) => {
-      setCategories(r.data.data ?? r.data ?? []);
+      setCategories(r.data.items ?? r.data ?? []);
     }).catch(() => {});
   }, []);
 

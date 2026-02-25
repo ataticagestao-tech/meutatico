@@ -6,6 +6,7 @@ import {
   BookOpen,
   FileText,
   Settings,
+  Calendar,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -98,7 +99,43 @@ export const MODULES: Module[] = [
   { key: 'clients', label: 'Clientes', href: '/dashboard/clients', icon: Users },
   { key: 'tickets', label: 'Tickets', href: '/dashboard/tickets', icon: Ticket },
   { key: 'tasks', label: 'Tarefas', href: '/dashboard/tasks', icon: ClipboardList },
+  { key: 'calendar', label: 'Calendario', href: '/dashboard/calendar', icon: Calendar },
   { key: 'knowledge_base', label: 'Base de Conhecimento', href: '/dashboard/knowledge-base', icon: BookOpen },
   { key: 'documents', label: 'Documentos', href: '/dashboard/documents', icon: FileText },
   { key: 'settings', label: 'Configurações', href: '/dashboard/settings', icon: Settings },
 ]
+
+// ---------------------------------------------------------------------------
+// Calendar
+// ---------------------------------------------------------------------------
+
+export const CALENDAR_SOURCE_COLORS: Record<string, string> = {
+  task: 'bg-blue-500',
+  ticket: 'bg-amber-500',
+  event: 'bg-violet-500',
+}
+
+export const CALENDAR_SOURCE_TEXT_COLORS: Record<string, string> = {
+  task: 'text-blue-600 dark:text-blue-400',
+  ticket: 'text-amber-600 dark:text-amber-400',
+  event: 'text-violet-600 dark:text-violet-400',
+}
+
+export const CALENDAR_SOURCE_BG_COLORS: Record<string, string> = {
+  task: 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800',
+  ticket: 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800',
+  event: 'bg-violet-50 border-violet-200 dark:bg-violet-950 dark:border-violet-800',
+}
+
+export const CALENDAR_SOURCE_LABELS: Record<string, string> = {
+  task: 'Tarefa',
+  ticket: 'Solicitacao',
+  event: 'Evento',
+}
+
+export const CALENDAR_EVENT_TYPES = [
+  { value: 'meeting', label: 'Reuniao' },
+  { value: 'reminder', label: 'Lembrete' },
+  { value: 'deadline', label: 'Prazo' },
+  { value: 'other', label: 'Outro' },
+] as const

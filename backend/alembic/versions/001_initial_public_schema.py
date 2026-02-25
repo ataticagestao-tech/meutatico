@@ -16,9 +16,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Usa metadata.create_all para criar todas as tabelas de uma vez
     from app.database import Base
-    from app.models import *  # noqa: F401, F403
+    import app.models  # noqa: F401 - registers all models with Base.metadata
 
     bind = op.get_bind()
     Base.metadata.create_all(bind)
@@ -26,7 +25,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     from app.database import Base
-    from app.models import *  # noqa: F401, F403
+    import app.models  # noqa: F401
 
     bind = op.get_bind()
     Base.metadata.drop_all(bind)

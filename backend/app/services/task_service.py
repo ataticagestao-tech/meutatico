@@ -285,6 +285,149 @@ class TaskService:
             "updated_at": template.updated_at,
         }
 
+    async def apply_template(
+        self, template_id: UUID, client_id: UUID | None, assigned_user_id: UUID | None, created_by: UUID
+    ) -> list[dict]:
+        """Create tasks from a template."""
+        result = await self.db.execute(
+            select(TaskTemplate).where(TaskTemplate.id == template_id)
+        )
+        template = result.scalar_one_or_none()
+        if not template:
+            raise NotFoundException("Template não encontrado")
+
+        created_tasks = []
+        now = datetime.now(timezone.utc)
+        for i, task_cfg in enumerate(template.tasks_config or []):
+            due_date = None
+            if task_cfg.get("relative_due_days"):
+                from datetime import timedelta
+                due_date = now + timedelta(days=task_cfg["relative_due_days"])
+
+            task = Task(
+                title=task_cfg.get("title", f"Tarefa {i + 1}"),
+                description=task_cfg.get("description"),
+                status="todo",
+                position=i,
+                priority=task_cfg.get("priority", "medium"),
+                category=task_cfg.get("category"),
+                client_id=client_id,
+                assigned_user_id=assigned_user_id,
+                due_date=due_date,
+                created_by=created_by,
+            )
+            self.db.add(task)
+            await self.db.flush()
+            created_tasks.append(await self._task_to_dict(task))
+
+        return created_tasks
+
+    async def seed_default_templates(self, created_by: UUID) -> list[dict]:
+        """Create the 7 default task templates if they don't exist."""
+        existing = await self.db.execute(select(func.count()).select_from(TaskTemplate))
+        if (existing.scalar() or 0) > 0:
+            return await self.list_templates()
+
+        defaults = [
+            {
+                "name": "Lançar Contas a Pagar",
+                "description": "Rotina de lançamento das contas a pagar do cliente",
+                "trigger_event": "weekly",
+                "tasks_config": [
+                    {"title": "Coletar notas e boletos", "priority": "high", "category": "Financeiro", "relative_due_days": 1},
+                    {"title": "Lançar no sistema financeiro", "priority": "high", "category": "Financeiro", "relative_due_days": 2},
+                    {"title": "Conferir lançamentos", "priority": "medium", "category": "Financeiro", "relative_due_days": 3},
+                ],
+            },
+            {
+                "name": "Lançar Contas a Receber",
+                "description": "Rotina de lançamento das contas a receber",
+                "trigger_event": "weekly",
+                "tasks_config": [
+                    {"title": "Verificar faturamento pendente", "priority": "high", "category": "Financeiro", "relative_due_days": 1},
+                    {"title": "Lançar recebimentos no sistema", "priority": "high", "category": "Financeiro", "relative_due_days": 2},
+                    {"title": "Baixar pagamentos recebidos", "priority": "medium", "category": "Financeiro", "relative_due_days": 3},
+                ],
+            },
+            {
+                "name": "Conciliação Bancária",
+                "description": "Conferência e conciliação dos extratos bancários",
+                "trigger_event": "weekly",
+                "tasks_config": [
+                    {"title": "Importar extrato bancário", "priority": "high", "category": "Financeiro", "relative_due_days": 1},
+                    {"title": "Conciliar lançamentos", "priority": "high", "category": "Financeiro", "relative_due_days": 2},
+                    {"title": "Resolver pendências de conciliação", "priority": "medium", "category": "Financeiro", "relative_due_days": 3},
+                ],
+            },
+            {
+                "name": "Emitir Boleto / 2ª Via",
+                "description": "Emissão de boletos e segundas vias para clientes",
+                "trigger_event": "on_demand",
+                "tasks_config": [
+                    {"title": "Verificar dados do boleto", "priority": "medium", "category": "Cobrança", "relative_due_days": 1},
+                    {"title": "Emitir boleto no sistema", "priority": "high", "category": "Cobrança", "relative_due_days": 1},
+                    {"title": "Enviar boleto ao cliente", "priority": "high", "category": "Cobrança", "relative_due_days": 1},
+                ],
+            },
+            {
+                "name": "Cobrar Inadimplente",
+                "description": "Fluxo de cobrança de clientes inadimplentes",
+                "trigger_event": "on_demand",
+                "tasks_config": [
+                    {"title": "Identificar títulos em atraso", "priority": "high", "category": "Cobrança", "relative_due_days": 1},
+                    {"title": "Enviar lembrete de cobrança", "priority": "high", "category": "Cobrança", "relative_due_days": 1},
+                    {"title": "Acompanhar retorno do cliente", "priority": "medium", "category": "Cobrança", "relative_due_days": 3},
+                    {"title": "Negociar pagamento se necessário", "priority": "medium", "category": "Cobrança", "relative_due_days": 5},
+                ],
+            },
+            {
+                "name": "Enviar NF / Comprovante",
+                "description": "Envio de notas fiscais e comprovantes de pagamento",
+                "trigger_event": "on_demand",
+                "tasks_config": [
+                    {"title": "Localizar NF/comprovante", "priority": "medium", "category": "Documentos", "relative_due_days": 1},
+                    {"title": "Enviar ao cliente por email", "priority": "high", "category": "Documentos", "relative_due_days": 1},
+                ],
+            },
+            {
+                "name": "Organizar Documentos do Mês",
+                "description": "Organização mensal de documentos contábeis e fiscais",
+                "trigger_event": "monthly",
+                "tasks_config": [
+                    {"title": "Coletar documentos do mês", "priority": "medium", "category": "Documentos", "relative_due_days": 2},
+                    {"title": "Classificar e organizar", "priority": "medium", "category": "Documentos", "relative_due_days": 4},
+                    {"title": "Armazenar no repositório", "priority": "low", "category": "Documentos", "relative_due_days": 5},
+                    {"title": "Notificar responsável", "priority": "low", "category": "Documentos", "relative_due_days": 5},
+                ],
+            },
+        ]
+
+        created = []
+        for tmpl in defaults:
+            template = TaskTemplate(
+                name=tmpl["name"],
+                description=tmpl["description"],
+                trigger_event=tmpl["trigger_event"],
+                tasks_config=tmpl["tasks_config"],
+                is_active=True,
+                created_by=created_by,
+            )
+            self.db.add(template)
+            await self.db.flush()
+            created.append({
+                "id": template.id,
+                "name": template.name,
+                "description": template.description,
+                "trigger_event": template.trigger_event,
+                "tasks_config": template.tasks_config or [],
+                "is_active": template.is_active,
+                "created_by": template.created_by,
+                "created_at": template.created_at,
+                "updated_at": template.updated_at,
+            })
+
+        return created
+
     # ── Helpers ──────────────────────────────────────────────────────────
 
     async def _task_to_dict(self, task: Task) -> dict:

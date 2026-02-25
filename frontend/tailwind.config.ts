@@ -57,8 +57,16 @@ const config: Config = {
         lg: "var(--shadow-lg)",
       },
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "'Segoe UI'",
+          "Roboto",
+          "'Helvetica Neue'",
+          "Arial",
+          "sans-serif",
+        ],
+        mono: ["'SF Mono'", "'Fira Code'", "Menlo", "Consolas", "monospace"],
       },
     },
   },

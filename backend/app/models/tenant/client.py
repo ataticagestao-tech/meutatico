@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, Date, DateTime,
-    ForeignKey, JSON, Numeric, String, Text,
+    ForeignKey, Integer, JSON, Numeric, String, Text,
 )
 from sqlalchemy.orm import relationship
 
@@ -55,6 +55,13 @@ class Client(Base):
     notes = Column(Text)
     tags = Column(JSON, default=[])
 
+    # Integração financeira (Supabase companies.id)
+    financial_company_id = Column(String(100), nullable=True, index=True)
+
+    # Logo
+    logo_url = Column(Text)
+    logo_source = Column(String(20))  # "auto" ou "manual"
+
     # Metadados
     created_by = Column(GUID, ForeignKey("users.id"))
     created_at = Column(
@@ -70,6 +77,7 @@ class Client(Base):
     )
 
     contacts = relationship("ClientContact", back_populates="client", cascade="all, delete-orphan")
+    partners = relationship("ClientPartner", back_populates="client", cascade="all, delete-orphan")
     tickets = relationship("Ticket", back_populates="client")
     tasks = relationship("Task", back_populates="client")
 
@@ -97,3 +105,50 @@ class ClientContact(Base):
     )
 
     client = relationship("Client", back_populates="contacts")
+
+
+class ClientPartner(Base):
+    __tablename__ = "client_partners"
+
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    client_id = Column(
+        GUID,
+        ForeignKey("clients.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Dados principais
+    name = Column(String(255), nullable=False)
+    document_number = Column(String(20))
+    document_type = Column(String(4))  # "CPF" ou "CNPJ"
+    role = Column(String(255))
+    role_code = Column(Integer)
+
+    # Classificação
+    partner_type = Column(Integer, nullable=False, default=2)  # 1=PJ, 2=PF, 3=Estrangeiro
+    partner_type_label = Column(String(50))
+    entry_date = Column(Date)
+    age_range = Column(String(100))
+    country = Column(String(100), default="Brasil")
+
+    # Representante Legal (quando sócio é PJ)
+    legal_representative_name = Column(String(255))
+    legal_representative_document = Column(String(20))
+    legal_representative_role = Column(String(255))
+
+    # Metadados
+    source = Column(String(20), nullable=False, default="api")  # 'api' ou 'manual'
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    client = relationship("Client", back_populates="partners")

@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PageWrapper } from "@/components/layout/page-wrapper";
+import Link from "next/link";
 import { Search, Plus, ChevronLeft, ChevronRight, Users, Filter } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { formatDate } from "@/lib/utils";
 import { CLIENT_STATUSES, STATUS_COLORS } from "@/lib/constants";
 import api from "@/lib/api";
+import { ClientAvatar } from "@/components/clients/client-avatar";
+import { ClientActionsMenu } from "@/components/clients/client-actions-menu";
 import type { Client, ClientStatus } from "@/types/client";
 import type { PaginatedResponse } from "@/types/api";
 
@@ -27,6 +29,7 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
@@ -42,7 +45,7 @@ export default function ClientsPage() {
       const { data } = await api.get<PaginatedResponse<Client>>(
         `/clients?${params.toString()}`
       );
-      setClients(data.data);
+      setClients(data.items);
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (err) {
@@ -61,6 +64,30 @@ export default function ClientsPage() {
     setPage(1);
   }, [debouncedSearch, statusFilter]);
 
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  async function handleDeleteClient(clientId: string) {
+    try {
+      await api.delete(`/clients/${clientId}`);
+      setClients((prev) => prev.filter((c) => c.id !== clientId));
+      setTotal((prev) => prev - 1);
+      setToast({ message: "Cliente excluido com sucesso.", type: "success" });
+    } catch (err: any) {
+      let msg = "Erro ao excluir cliente.";
+      if (err?.response?.status === 403) {
+        msg = "Voce nao tem permissao para excluir clientes.";
+      } else if (err?.response?.status === 409) {
+        msg = "Este cliente possui registros vinculados e nao pode ser excluido.";
+      }
+      setToast({ message: msg, type: "error" });
+    }
+  }
+
   function formatCnpjCpf(value: string): string {
     const digits = value.replace(/\D/g, "");
     if (digits.length === 14) {
@@ -73,6 +100,31 @@ export default function ClientsPage() {
       return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
     }
     return value;
+  }
+
+  function formatPhone(value: string | undefined): string {
+    if (!value) return "\u2014";
+    const digits = value.replace(/\D/g, "");
+    if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return value;
+  }
+
+  function getTaxRegimeBadge(regime: string | undefined) {
+    if (!regime) return <span className="text-foreground-tertiary text-sm">{"\u2014"}</span>;
+    const normalized = regime.toLowerCase().replace(/\s+/g, "_").replace(/[áàã]/g, "a");
+    const config: Record<string, { label: string; classes: string }> = {
+      simples_nacional: { label: "Simples Nacional", classes: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" },
+      lucro_presumido: { label: "Lucro Presumido", classes: "bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400" },
+      lucro_real: { label: "Lucro Real", classes: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400" },
+      mei: { label: "MEI", classes: "bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400" },
+    };
+    const match = config[normalized] || { label: regime, classes: "bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400" };
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${match.classes}`}>
+        {match.label}
+      </span>
+    );
   }
 
   return (
@@ -89,6 +141,17 @@ export default function ClientsPage() {
         </button>
       }
     >
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${
+            toast.type === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="bg-background-primary border border-border rounded-xl p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -130,7 +193,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-background-primary border border-border rounded-xl overflow-hidden">
+      <div className="bg-background-primary border border-border rounded-xl overflow-clip">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -142,16 +205,16 @@ export default function ClientsPage() {
                   CNPJ/CPF
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
-                  Responsavel
+                  Regime Tributario
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
+                <th className="text-center px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
                   Status
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
                   Telefone
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
-                  Criado em
+                <th className="text-center px-4 py-3 text-xs font-semibold text-foreground-secondary uppercase tracking-wider w-16">
+                  Acoes
                 </th>
               </tr>
             </thead>
@@ -181,28 +244,34 @@ export default function ClientsPage() {
                 clients.map((client) => (
                   <tr
                     key={client.id}
-                    onClick={() => router.push(`/clients/${client.id}`)}
-                    className="hover:bg-background-secondary cursor-pointer transition-colors"
+                    className="hover:bg-background-secondary transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-foreground-primary">
-                          {client.trade_name || client.company_name}
-                        </p>
-                        {client.trade_name && (
-                          <p className="text-xs text-foreground-tertiary">
-                            {client.company_name}
+                      <Link href={`/clients/${client.id}`} className="flex items-center gap-3">
+                        <ClientAvatar
+                          logoUrl={client.logo_url}
+                          name={client.trade_name || client.company_name}
+                          size="md"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground-primary truncate">
+                            {client.trade_name || client.company_name}
                           </p>
-                        )}
-                      </div>
+                          {client.trade_name && client.trade_name !== client.company_name && (
+                            <p className="text-xs text-foreground-tertiary truncate">
+                              {client.company_name}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground-secondary font-mono">
                       {formatCnpjCpf(client.document_number)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground-secondary">
-                      {client.responsible_user_name || "—"}
-                    </td>
                     <td className="px-4 py-3">
+                      {getTaxRegimeBadge(client.tax_regime)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           STATUS_COLORS[client.status] || "bg-gray-100 text-gray-800"
@@ -212,10 +281,14 @@ export default function ClientsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground-secondary">
-                      {client.phone || "—"}
+                      {formatPhone(client.phone)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground-secondary">
-                      {formatDate(client.created_at)}
+                    <td className="px-4 py-3 text-center">
+                      <ClientActionsMenu
+                        clientId={client.id}
+                        clientName={client.trade_name || client.company_name}
+                        onDelete={handleDeleteClient}
+                      />
                     </td>
                   </tr>
                 ))

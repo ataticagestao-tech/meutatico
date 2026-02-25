@@ -2,7 +2,11 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'logo.clearbit.com' },
+      { protocol: 'https', hostname: 'www.google.com', pathname: '/s2/favicons/**' },
+      { protocol: 'http', hostname: 'localhost' },
+    ],
   },
   async rewrites() {
     return [

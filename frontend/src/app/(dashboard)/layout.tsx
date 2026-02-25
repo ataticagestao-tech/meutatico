@@ -20,7 +20,8 @@ export default function DashboardLayout({
       return;
     }
     setMounted(true);
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!mounted) {
     return (

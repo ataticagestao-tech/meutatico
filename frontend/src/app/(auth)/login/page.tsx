@@ -54,15 +54,28 @@ export default function LoginPage() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-secondary items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">Tatica Gestap</h1>
-          <p className="text-lg text-slate-300 mb-8">
-            Sistema de Gestao Operacional Interna
-          </p>
-          <div className="w-64 h-64 mx-auto bg-slate-700/50 rounded-2xl flex items-center justify-center">
-            <div className="text-6xl font-bold text-brand-primary">TG</div>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect x="3" y="3" width="19" height="19" rx="4" fill="white" />
+              <rect x="26" y="3" width="19" height="19" rx="4" fill="white" opacity=".2" />
+              <rect x="3" y="26" width="19" height="19" rx="4" fill="white" opacity=".2" />
+              <rect x="26" y="26" width="19" height="19" rx="4" fill="white" />
+            </svg>
+            <h1 className="text-4xl font-bold text-white">tática</h1>
           </div>
-          <p className="mt-8 text-sm text-slate-400">
-            Centralize processos, solicitacoes, tarefas e documentos em uma unica plataforma.
+          <p className="text-xs uppercase tracking-[2px] text-white/35 font-medium mb-10">
+            gestão estratégica
+          </p>
+          <div className="w-64 h-64 mx-auto bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center">
+            <svg width="120" height="120" viewBox="0 0 48 48" fill="none">
+              <rect x="3" y="3" width="19" height="19" rx="4" fill="white" />
+              <rect x="26" y="3" width="19" height="19" rx="4" fill="white" opacity=".2" />
+              <rect x="3" y="26" width="19" height="19" rx="4" fill="white" opacity=".2" />
+              <rect x="26" y="26" width="19" height="19" rx="4" fill="white" />
+            </svg>
+          </div>
+          <p className="mt-8 text-sm text-white/40">
+            Centralize processos, solicitações, tarefas e documentos em uma única plataforma.
           </p>
         </div>
       </div>
@@ -71,7 +84,16 @@ export default function LoginPage() {
       <div className="flex w-full lg:w-1/2 items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
-            <h1 className="text-3xl font-bold text-foreground-primary">Tatica Gestap</h1>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                <rect x="3" y="3" width="19" height="19" rx="4" fill="#171717" />
+                <rect x="26" y="3" width="19" height="19" rx="4" fill="#171717" opacity=".2" />
+                <rect x="3" y="26" width="19" height="19" rx="4" fill="#171717" opacity=".2" />
+                <rect x="26" y="26" width="19" height="19" rx="4" fill="#171717" />
+              </svg>
+              <h1 className="text-3xl font-bold text-foreground-primary">tática</h1>
+            </div>
+            <p className="text-[10px] uppercase tracking-[1.5px] text-foreground-tertiary font-medium">gestão estratégica</p>
           </div>
 
           <h2 className="text-2xl font-semibold text-foreground-primary mb-2">
@@ -145,7 +167,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-primary text-white
-                rounded-lg font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-brand-primary/20
+                rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand-primary/20
                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (

@@ -50,7 +50,7 @@ export default function SettingsUsersPage() {
       if (debouncedSearch) params.set("search", debouncedSearch);
 
       const { data } = await api.get(`/users?${params.toString()}`);
-      setUsers((data as any).data ?? data ?? []);
+      setUsers((data as any).items ?? data ?? []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
     } finally {
@@ -62,7 +62,7 @@ export default function SettingsUsersPage() {
 
   useEffect(() => {
     api.get("/roles").then((r: any) => {
-      setRoles(r.data.data ?? r.data ?? []);
+      setRoles(r.data.items ?? r.data ?? []);
     }).catch(() => {});
   }, []);
 

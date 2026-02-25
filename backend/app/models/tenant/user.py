@@ -35,7 +35,7 @@ class User(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan", foreign_keys="[UserRole.user_id]")
 
 
 class UserRole(Base):

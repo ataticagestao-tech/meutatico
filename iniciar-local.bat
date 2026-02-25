@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+setlocal DisableDelayedExpansion
 title Tatica Gestap - Servidor Local
 
 echo ============================================
@@ -12,22 +13,22 @@ echo    - Python 3.12+
 echo    - Node.js 20+
 echo.
 
-:: ─── Verifica Python ──────────────────────────
+REM --- Verifica Python ---
 python --version >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo [ERRO] Python nao encontrado!
+    echo [ERRO] Python nao encontrado
     echo Baixe em: https://www.python.org/downloads/
-    echo IMPORTANTE: Marque "Add Python to PATH" na instalacao!
+    echo IMPORTANTE: Marque "Add Python to PATH" na instalacao
     echo.
     pause
     exit /b 1
 )
 for /f "tokens=*" %%i in ('python --version 2^>^&1') do echo [OK] %%i
 
-:: ─── Verifica Node ────────────────────────────
+REM --- Verifica Node ---
 node --version >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo [ERRO] Node.js nao encontrado!
+    echo [ERRO] Node.js nao encontrado
     echo Baixe em: https://nodejs.org/
     echo.
     pause
@@ -36,23 +37,21 @@ if %ERRORLEVEL% neq 0 (
 for /f "tokens=*" %%i in ('node --version 2^>^&1') do echo [OK] Node.js %%i
 echo.
 
-:: ─── Configura .env do backend ────────────────
+REM --- Configura .env do backend ---
 echo [INFO] Configurando backend\.env...
-(
-    echo APP_NAME=Tatica Gestap
-    echo DEBUG=true
-    echo API_PREFIX=/api/v1
-    echo DATABASE_URL=sqlite+aiosqlite:///./tatica_gestap.db
-    echo JWT_SECRET_KEY=dev-secret-key-change-in-production-min-32-chars!!
-    echo SUPER_ADMIN_SECRET_KEY=dev-super-admin-secret-change-in-production!!
-    echo STORAGE_BACKEND=local
-    echo STORAGE_LOCAL_PATH=./uploads
-    echo CORS_ORIGINS=["http://localhost:3000"]
-) > backend\.env
+echo APP_NAME=Tatica Gestap> backend\.env
+echo DEBUG=true>> backend\.env
+echo API_PREFIX=/api/v1>> backend\.env
+echo DATABASE_URL=sqlite+aiosqlite:///./tatica_gestap.db>> backend\.env
+echo JWT_SECRET_KEY=dev-secret-key-change-in-production-min-32-chars>> backend\.env
+echo SUPER_ADMIN_SECRET_KEY=dev-super-admin-secret-change-in-production>> backend\.env
+echo STORAGE_BACKEND=local>> backend\.env
+echo STORAGE_LOCAL_PATH=./uploads>> backend\.env
+echo CORS_ORIGINS=["http://localhost:3000"]>> backend\.env
 echo [OK] backend\.env configurado
 echo.
 
-:: ─── Setup Python venv ────────────────────────
+REM --- Setup Python venv ---
 echo ============================================
 echo    Configurando Backend Python...
 echo ============================================
@@ -74,14 +73,14 @@ pip install -r requirements.txt --quiet
 echo [OK] Dependencias instaladas
 echo.
 
-:: ─── Cria pasta uploads ───────────────────────
+REM --- Cria pasta uploads ---
 if not exist "uploads" mkdir uploads
 
-:: ─── Migrations (cria banco SQLite) ───────────
+REM --- Migrations (cria banco SQLite) ---
 echo [INFO] Criando banco de dados SQLite...
 alembic upgrade head
 if %ERRORLEVEL% neq 0 (
-    echo [ERRO] Falha ao criar o banco!
+    echo [ERRO] Falha ao criar o banco
     echo.
     pause
     exit /b 1
@@ -89,21 +88,21 @@ if %ERRORLEVEL% neq 0 (
 echo [OK] Banco SQLite criado
 echo.
 
-:: ─── Seed ─────────────────────────────────────
+REM --- Seed ---
 echo [INFO] Populando dados iniciais...
 python seed.py
 echo.
 
-:: ─── Inicia Backend ───────────────────────────
+REM --- Inicia Backend ---
 echo ============================================
 echo    Iniciando Backend (porta 8000)...
 echo ============================================
 echo.
-start "TATICA GESTAP - Backend (uvicorn)" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate.bat && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+start "TATICA GESTAP - Backend" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate.bat && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app"
 
 cd ..
 
-:: ─── Setup Frontend ───────────────────────────
+REM --- Setup Frontend ---
 echo.
 echo ============================================
 echo    Configurando Frontend Next.js...
@@ -120,24 +119,29 @@ if not exist "node_modules" (
 )
 echo.
 
-:: ─── Inicia Frontend ──────────────────────────
+REM --- Inicia Frontend ---
 echo ============================================
 echo    Iniciando Frontend (porta 3000)...
 echo ============================================
 echo.
-start "TATICA GESTAP - Frontend (Next.js)" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "TATICA GESTAP - Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 cd ..
 
-:: ─── Aguarda e abre navegador ─────────────────
+REM --- Aguarda e abre navegador ---
 echo.
 echo Aguardando frontend compilar...
-timeout /t 15 /nobreak >nul
+echo (Tentando conectar em localhost:3000...)
+:WAIT_LOOP
+timeout /t 3 /nobreak >nul
+powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:3000' -UseBasicParsing -TimeoutSec 2; exit 0 } catch { exit 1 }" >nul 2>&1
+if %ERRORLEVEL% neq 0 goto WAIT_LOOP
+echo [OK] Frontend esta rodando
 
 echo.
 echo ============================================
 echo.
-echo    TATICA GESTAP INICIADO COM SUCESSO!
+echo    TATICA GESTAP INICIADO COM SUCESSO
 echo.
 echo ============================================
 echo.
@@ -145,7 +149,7 @@ echo    Frontend:   http://localhost:3000
 echo    API:        http://localhost:8000/api/v1
 echo    API Docs:   http://localhost:8000/docs
 echo.
-echo  ──────────────────────────────────────────
+echo  ------------------------------------------
 echo.
 echo    LOGIN TENANT:
 echo    Email: admin@taticagestap.com.br
@@ -155,7 +159,7 @@ echo    LOGIN SUPER ADMIN (via /super-admin):
 echo    Email: admin@taticagestap.com.br
 echo    Senha: TrocaR@123!
 echo.
-echo  ──────────────────────────────────────────
+echo  ------------------------------------------
 echo.
 echo    Banco: backend\tatica_gestap.db (SQLite)
 echo    Feche as janelas para parar os servidores.

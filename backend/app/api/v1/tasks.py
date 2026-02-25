@@ -8,7 +8,7 @@ from app.core.permissions import require_permission
 from app.dependencies import get_current_user, get_db
 from app.schemas.task import (
     TaskCreate, TaskListResponse, TaskMoveRequest,
-    TaskResponse, TaskTemplateCreate, TaskTemplateResponse, TaskUpdate,
+    TaskResponse, TaskTemplateApply, TaskTemplateCreate, TaskTemplateResponse, TaskUpdate,
 )
 from app.services.task_service import TaskService
 
@@ -79,7 +79,7 @@ async def move_task(
     _perm=require_permission("tasks", "update"),
 ):
     service = TaskService(db)
-    return await service.move_task(task_id, data.status, data.position)
+    return await service.move_task(task_id, data)
 
 
 @router.delete("/{task_id}", status_code=204)
@@ -113,3 +113,30 @@ async def create_template(
 ):
     service = TaskService(db)
     return await service.create_template(data, created_by=current_user["id"])
+
+
+@router.post("/templates/seed")
+async def seed_templates(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+    _perm=require_permission("tasks", "manage"),
+):
+    service = TaskService(db)
+    return await service.seed_default_templates(created_by=current_user["id"])
+
+
+@router.post("/templates/{template_id}/apply", response_model=list[TaskResponse])
+async def apply_template(
+    template_id: UUID,
+    data: TaskTemplateApply,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+    _perm=require_permission("tasks", "create"),
+):
+    service = TaskService(db)
+    return await service.apply_template(
+        template_id=template_id,
+        client_id=data.client_id,
+        assigned_user_id=data.assigned_user_id,
+        created_by=current_user["id"],
+    )

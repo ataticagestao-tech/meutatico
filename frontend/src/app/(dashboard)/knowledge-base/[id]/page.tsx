@@ -57,7 +57,7 @@ export default function KBArticleEditorPage() {
 
   useEffect(() => {
     api.get("/knowledge-base/categories").then((r: any) => {
-      const data = r.data.data ?? r.data ?? [];
+      const data = r.data.items ?? r.data ?? [];
       // Flatten tree if nested
       const flat: KBCategory[] = [];
       function flatten(items: any[]) {

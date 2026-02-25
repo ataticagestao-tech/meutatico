@@ -1,4 +1,8 @@
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
+
+from app.dependencies import get_current_user
 
 
 class PermissionChecker:
@@ -17,7 +21,7 @@ class PermissionChecker:
         self.module = module
         self.action = action
 
-    async def __call__(self, current_user: dict = None):
+    async def __call__(self, current_user: Annotated[dict, Depends(get_current_user)]):
         if current_user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

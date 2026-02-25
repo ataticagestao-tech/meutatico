@@ -2,20 +2,26 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
+import jwt
 
 from app.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    password_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+    except Exception:
+        return False
 
 
 def create_access_token(
@@ -63,19 +69,19 @@ def decode_token(
             algorithms=[settings.JWT_ALGORITHM],
         )
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
 def validate_password_strength(password: str) -> list[str]:
-    """Valida requisitos de senha: min 8 chars, 1 maiúscula, 1 número, 1 especial."""
+    """Valida requisitos de senha: min 8 chars, 1 maiuscula, 1 numero, 1 especial."""
     errors = []
     if len(password) < 8:
-        errors.append("Senha deve ter no mínimo 8 caracteres")
+        errors.append("Senha deve ter no minimo 8 caracteres")
     if not any(c.isupper() for c in password):
-        errors.append("Senha deve conter pelo menos 1 letra maiúscula")
+        errors.append("Senha deve conter pelo menos 1 letra maiuscula")
     if not any(c.isdigit() for c in password):
-        errors.append("Senha deve conter pelo menos 1 número")
+        errors.append("Senha deve conter pelo menos 1 numero")
     if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
         errors.append("Senha deve conter pelo menos 1 caractere especial")
     return errors

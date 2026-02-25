@@ -62,7 +62,7 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     fetchTicket();
-    api.get("/users").then((r: any) => setUsers(r.data.data ?? r.data ?? [])).catch(() => {});
+    api.get("/users").then((r: any) => setUsers(r.data.items ?? r.data ?? [])).catch(() => {});
   }, [fetchTicket]);
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function TicketDetailPage() {
     try {
       await api.post(`/tickets/${ticketId}/messages`, {
         content: replyContent,
-        is_internal: isInternal,
+        is_internal_note: isInternal,
       });
       setReplyContent("");
       setIsInternal(false);
@@ -125,11 +125,11 @@ export default function TicketDetailPage() {
 
   return (
     <PageWrapper
-      title={`#${ticket.number} - ${ticket.subject}`}
+      title={`#${ticket.ticket_number} - ${ticket.title}`}
       breadcrumb={[
         { label: "Dashboard", href: "/dashboard" },
         { label: "Solicitacoes", href: "/tickets" },
-        { label: `#${ticket.number}` },
+        { label: `#${ticket.ticket_number}` },
       ]}
       actions={
         <button
@@ -165,20 +165,20 @@ export default function TicketDetailPage() {
 
               {/* Messages */}
               {(ticket.messages || []).map((msg: TicketMessage) => (
-                <div key={msg.id} className={`flex gap-3 ${msg.is_internal ? "" : ""}`}>
+                <div key={msg.id} className={`flex gap-3 ${msg.is_internal_note ? "" : ""}`}>
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      msg.is_internal
+                      msg.is_internal_note
                         ? "bg-yellow-100 text-yellow-700"
                         : "bg-brand-primary/10 text-brand-primary"
                     }`}
                   >
-                    {getInitials(msg.user_name)}
+                    {getInitials(msg.author_name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-semibold text-foreground-primary">{msg.user_name}</span>
-                      {msg.is_internal && (
+                      <span className="text-sm font-semibold text-foreground-primary">{msg.author_name}</span>
+                      {msg.is_internal_note && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
                           <Lock size={10} />
                           Nota interna
@@ -188,7 +188,7 @@ export default function TicketDetailPage() {
                     </div>
                     <div
                       className={`rounded-lg p-3 ${
-                        msg.is_internal
+                        msg.is_internal_note
                           ? "bg-yellow-50 border border-yellow-200"
                           : "bg-background-secondary border border-border"
                       }`}
@@ -289,9 +289,9 @@ export default function TicketDetailPage() {
             <div>
               <label className="block text-xs font-medium text-foreground-tertiary mb-1">Responsavel</label>
               <select
-                value={ticket.assigned_to || ""}
-                onChange={(e) => updateTicketField("assigned_to", e.target.value)}
-                disabled={updatingField === "assigned_to"}
+                value={ticket.assigned_user_id || ""}
+                onChange={(e) => updateTicketField("assigned_user_id", e.target.value)}
+                disabled={updatingField === "assigned_user_id"}
                 className={selectClass}
               >
                 <option value="">Nao atribuido</option>

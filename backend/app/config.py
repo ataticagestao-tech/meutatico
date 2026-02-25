@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -39,8 +40,43 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "noreply@taticagestap.com.br"
     SMTP_FROM_NAME: str = "Tatica Gestap"
 
+    # Supabase Financeiro (ataticagestao.com) — READ-ONLY, SERVER-SIDE ONLY
+    SUPABASE_FINANCEIRO_URL: str = ""
+    SUPABASE_FINANCEIRO_SERVICE_KEY: str = ""
+    FINANCIAL_BASE_URL: str = "https://ataticagestao.com/auth"
+
+    # Microsoft Graph / OneDrive
+    MICROSOFT_CLIENT_ID: str = ""
+    MICROSOFT_CLIENT_SECRET: str = ""
+    MICROSOFT_TENANT_ID: str = ""
+    ONEDRIVE_ROOT_FOLDER: str = "Tatica Gestap/Clientes"
+
+    # Google API (Gmail + Calendar)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+
+    # URLs (for OAuth callbacks)
+    BACKEND_BASE_URL: str = "http://localhost:8000"
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
+
+    # Instagram Graph API (Facebook Graph API v21.0)
+    INSTAGRAM_APP_ID: str = ""
+    INSTAGRAM_APP_SECRET: str = ""
+    INSTAGRAM_PAGE_ACCESS_TOKEN: str = ""
+    INSTAGRAM_BUSINESS_ACCOUNT_ID: str = ""
+
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            if v.startswith("["):
+                import json
+                return json.loads(v)
+            return [origin.strip() for origin in v.split(",")]
+        return v
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

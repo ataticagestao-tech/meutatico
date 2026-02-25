@@ -13,19 +13,38 @@ import {
   Settings2,
   Contact,
   Loader2,
+  CheckSquare,
+  Ticket,
+  Users as UsersIcon,
+  FolderOpen,
+  DollarSign,
+  History,
 } from "lucide-react";
 import { CLIENT_STATUSES } from "@/lib/constants";
 import api from "@/lib/api";
+import { ClientAvatarUpload } from "@/components/clients/client-avatar-upload";
+import { ClientTasksTab } from "@/components/clients/client-tasks-tab";
+import { ClientTicketsTab } from "@/components/clients/client-tickets-tab";
+import { ClientPartnersTab } from "@/components/clients/client-partners-tab";
+import { ClientDocumentsTab } from "@/components/clients/client-documents-tab";
+import { ClientFinanceiroTab } from "@/components/clients/client-financeiro-tab";
+import { ClientHistoricoTab } from "@/components/clients/client-historico-tab";
 import type { Client, ClientUpdateRequest, ClientContact } from "@/types/client";
 import type { UserType } from "@/types/user";
 
-type TabKey = "main" | "address" | "management" | "contacts";
+type TabKey = "main" | "address" | "management" | "contacts" | "tasks" | "tickets" | "partners" | "documents" | "financeiro" | "historico";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "main", label: "Dados Principais", icon: Building2 },
-  { key: "address", label: "Endereco", icon: MapPin },
-  { key: "management", label: "Gestao", icon: Settings2 },
+  { key: "address", label: "Endereço", icon: MapPin },
+  { key: "management", label: "Gestão", icon: Settings2 },
   { key: "contacts", label: "Contatos", icon: Contact },
+  { key: "tasks", label: "Tarefas", icon: CheckSquare },
+  { key: "tickets", label: "Solicitações", icon: Ticket },
+  { key: "partners", label: "Sócios", icon: UsersIcon },
+  { key: "documents", label: "Documentos", icon: FolderOpen },
+  { key: "financeiro", label: "Financeiro", icon: DollarSign },
+  { key: "historico", label: "Histórico", icon: History },
 ];
 
 const BR_STATES = [
@@ -84,6 +103,9 @@ export default function ClientDetailPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [documentError, setDocumentError] = useState<string | null>(null);
+  const [existingClient, setExistingClient] = useState<{ id: string; company_name: string; trade_name?: string } | null>(null);
 
   // Form state
   const [documentType, setDocumentType] = useState<"cnpj" | "cpf">("cnpj");
@@ -140,6 +162,7 @@ export default function ClientDetailPage() {
     setTaxRegime(client.tax_regime || "");
     setSystemsUsed(client.systems_used || []);
     setNotes(client.notes || "");
+    setLogoUrl(client.logo_url || null);
     if (client.contacts && client.contacts.length > 0) {
       setContacts(client.contacts);
     } else {
@@ -152,11 +175,11 @@ export default function ClientDetailPage() {
       try {
         const [clientRes, usersRes] = await Promise.all([
           api.get<Client | { data: Client }>(`/clients/${clientId}`),
-          api.get<{ data: UserType[] }>("/users").catch(() => ({ data: { data: [] } })),
+          api.get<{ items: UserType[] }>("/users").catch(() => ({ data: { items: [] } })),
         ]);
-        const clientData = (clientRes.data as any).data ?? clientRes.data;
+        const clientData = (clientRes.data as any).items ?? clientRes.data;
         populateForm(clientData as Client);
-        setUsers((usersRes.data as any).data ?? usersRes.data as unknown as UserType[]);
+        setUsers((usersRes.data as any).items ?? usersRes.data as unknown as UserType[]);
       } catch (err) {
         console.error("Failed to load client:", err);
         setToast({ message: "Erro ao carregar cliente.", type: "error" });
@@ -187,6 +210,30 @@ export default function ClientDetailPage() {
         setAddressState(data.uf || "");
       }
     } catch {}
+  }
+
+  async function checkDocumentDuplicate(docNumber: string) {
+    const cleaned = docNumber.replace(/\D/g, "");
+    if (cleaned.length < 11) {
+      setDocumentError(null);
+      setExistingClient(null);
+      return;
+    }
+    try {
+      const res = await api.get(`/clients/check-document/${cleaned}`, {
+        params: { exclude_id: clientId },
+      });
+      if (res.data.exists) {
+        const name = res.data.client.trade_name || res.data.client.company_name;
+        setDocumentError(`Ja existe outro cliente com este documento: ${name}`);
+        setExistingClient(res.data.client);
+      } else {
+        setDocumentError(null);
+        setExistingClient(null);
+      }
+    } catch {
+      // silently ignore
+    }
   }
 
   function addSystem() {
@@ -263,7 +310,22 @@ export default function ClientDetailPage() {
       await api.put(`/clients/${clientId}`, payload);
       setToast({ message: "Cliente atualizado com sucesso!", type: "success" });
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Erro ao atualizar cliente.";
+      let msg = "Erro ao atualizar cliente.";
+      if (err?.response?.status === 409) {
+        const detail = err.response.data?.detail;
+        msg = typeof detail === "string" ? detail : "Ja existe outro cliente com este documento.";
+        setDocumentError(msg);
+        setActiveTab("main");
+      } else {
+        const detail = err?.response?.data?.detail;
+        if (typeof detail === "string") {
+          msg = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          msg = detail.map((e: any) => e.msg || String(e)).join("; ");
+        } else if (err?.response?.data?.message) {
+          msg = err.response.data.message;
+        }
+      }
       setToast({ message: msg, type: "error" });
     } finally {
       setSaving(false);
@@ -314,6 +376,49 @@ export default function ClientDetailPage() {
           {toast.message}
         </div>
       )}
+
+      {/* Client Header with Avatar */}
+      <div className="flex items-start gap-4 mb-6 bg-background-primary border border-border rounded-xl p-5">
+        <ClientAvatarUpload
+          clientId={clientId}
+          logoUrl={logoUrl}
+          name={tradeName || companyName || "Cliente"}
+          size="xl"
+          onUploadSuccess={(newUrl) => setLogoUrl(newUrl)}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-xl font-semibold text-foreground-primary">
+              {tradeName || companyName || "Cliente"}
+            </h2>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                status === "active"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  : status === "inactive"
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+              }`}
+            >
+              {status === "active" ? "Ativo" : status === "inactive" ? "Inativo" : "Prospecto"}
+            </span>
+          </div>
+          {tradeName && companyName && (
+            <p className="text-sm text-foreground-tertiary">{companyName}</p>
+          )}
+          <div className="flex items-center gap-4 mt-2 text-xs text-foreground-tertiary flex-wrap">
+            {documentNumber && (
+              <span>{documentType.toUpperCase()}: {documentNumber}</span>
+            )}
+            {responsibleUserId && (
+              <span>
+                Responsável: {users.find((u) => u.id === responsibleUserId)?.name || "—"}
+              </span>
+            )}
+            {email && <span>{email}</span>}
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit}>
         {/* Tabs */}
@@ -372,12 +477,30 @@ export default function ClientDetailPage() {
                   <input
                     type="text"
                     value={documentNumber}
-                    onChange={(e) =>
-                      setDocumentNumber(documentType === "cnpj" ? maskCNPJ(e.target.value) : maskCPF(e.target.value))
-                    }
+                    onChange={(e) => {
+                      setDocumentNumber(documentType === "cnpj" ? maskCNPJ(e.target.value) : maskCPF(e.target.value));
+                      setDocumentError(null);
+                      setExistingClient(null);
+                    }}
+                    onBlur={(e) => checkDocumentDuplicate(e.target.value)}
                     placeholder={documentType === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
-                    className={inputClass}
+                    className={`${inputClass} ${documentError ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : ""}`}
                   />
+                  {documentError && (
+                    <div className="flex items-center gap-2 mt-1.5 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <span className="text-sm text-red-600 dark:text-red-400 flex-1">
+                        {documentError}
+                      </span>
+                      {existingClient && (
+                        <a
+                          href={`/clients/${existingClient.id}`}
+                          className="text-sm text-blue-600 hover:underline whitespace-nowrap"
+                        >
+                          Ver cliente
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className={labelClass}>Razao Social *</label>
@@ -561,6 +684,26 @@ export default function ClientDetailPage() {
                 </button>
               </div>
             )}
+
+            {/* Tab 5: Tarefas */}
+            {activeTab === "tasks" && <ClientTasksTab clientId={clientId} />}
+
+            {/* Tab 6: Solicitações */}
+            {activeTab === "tickets" && <ClientTicketsTab clientId={clientId} />}
+
+            {/* Tab 7: Sócios */}
+            {activeTab === "partners" && <ClientPartnersTab clientId={clientId} />}
+
+            {/* Tab 8: Documentos */}
+            {activeTab === "documents" && (
+              <ClientDocumentsTab clientId={clientId} clientName={tradeName || companyName} />
+            )}
+
+            {/* Tab 9: Financeiro */}
+            {activeTab === "financeiro" && <ClientFinanceiroTab clientId={clientId} />}
+
+            {/* Tab 10: Histórico */}
+            {activeTab === "historico" && <ClientHistoricoTab clientId={clientId} />}
           </div>
         </div>
 

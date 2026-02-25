@@ -20,7 +20,7 @@ class UserService:
         self,
         search: str | None = None,
         is_active: bool | None = None,
-        role_id: UUID | None = None,
+        role_slug: str | None = None,
         page: int = 1,
         per_page: int = 20,
         sort_by: str = "created_at",
@@ -42,17 +42,12 @@ class UserService:
             query = query.where(User.is_active == is_active)
             count_query = count_query.where(User.is_active == is_active)
 
-        if role_id:
-            query = query.where(
-                User.id.in_(
-                    select(UserRole.user_id).where(UserRole.role_id == role_id)
-                )
-            )
-            count_query = count_query.where(
-                User.id.in_(
-                    select(UserRole.user_id).where(UserRole.role_id == role_id)
-                )
-            )
+        if role_slug:
+            role_filter = select(UserRole.user_id).join(
+                Role, Role.id == UserRole.role_id
+            ).where(Role.slug == role_slug)
+            query = query.where(User.id.in_(role_filter))
+            count_query = count_query.where(User.id.in_(role_filter))
 
         total = (await self.db.execute(count_query)).scalar()
 

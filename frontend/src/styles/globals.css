@@ -1,45 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Light Theme */
-  --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F8FAFC;
-  --color-bg-tertiary: #F1F5F9;
-  --color-bg-sidebar: #1E293B;
+  /* ═══ TATICA Brand v5 — Light Theme ═══ */
 
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #94A3B8;
+  /* Background — Bege quente para área de conteúdo */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #faf8f5;
+  --color-bg-tertiary: #f3efe8;
+  --color-bg-sidebar: #171717;
+
+  /* Texto — Escala de preto neutro */
+  --color-text-primary: #171717;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #a3a3a3;
   --color-text-inverse: #FFFFFF;
 
-  --color-border: #E2E8F0;
-  --color-border-focus: #3B82F6;
+  /* Bordas */
+  --color-border: #e5e5e5;
+  --color-border-focus: #3b6cf6;
 
-  --color-brand-primary: #3B82F6;
-  --color-brand-secondary: #1E293B;
-  --color-brand-accent: #0EA5E9;
+  /* Brand — Azul tático */
+  --color-brand-primary: #3b6cf6;
+  --color-brand-secondary: #171717;
+  --color-brand-accent: #2348eb;
 
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
+  /* Feedback */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #3b6cf6;
 
-  /* Status colors */
-  --color-status-active: #10B981;
-  --color-status-inactive: #6B7280;
+  /* Status */
+  --color-status-active: #16a34a;
+  --color-status-inactive: #737373;
   --color-status-onboarding: #8B5CF6;
-  --color-status-suspended: #F59E0B;
-  --color-status-churned: #EF4444;
+  --color-status-suspended: #d97706;
+  --color-status-churned: #dc2626;
 
-  /* Priority colors */
-  --color-priority-low: #6B7280;
-  --color-priority-medium: #3B82F6;
-  --color-priority-high: #F59E0B;
-  --color-priority-urgent: #EF4444;
+  /* Priority */
+  --color-priority-low: #737373;
+  --color-priority-medium: #3b6cf6;
+  --color-priority-high: #d97706;
+  --color-priority-urgent: #dc2626;
 
   /* Radius */
   --radius-sm: 6px;
@@ -49,22 +53,22 @@
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
 }
 
 [data-theme="dark"] {
-  --color-bg-primary: #0F172A;
-  --color-bg-secondary: #1E293B;
-  --color-bg-tertiary: #334155;
-  --color-bg-sidebar: #0F172A;
+  --color-bg-primary: #171717;
+  --color-bg-secondary: #262626;
+  --color-bg-tertiary: #404040;
+  --color-bg-sidebar: #0a0a0a;
 
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary: #64748B;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-text-tertiary: #737373;
 
-  --color-border: #334155;
-  --color-border-focus: #3B82F6;
+  --color-border: #404040;
+  --color-border-focus: #3b6cf6;
 }
 
 @layer base {
@@ -92,6 +96,6 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-foreground-tertiary/30 rounded-full;
+    @apply bg-gray-400/30 rounded-full;
   }
 }

@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.router import api_router
 from app.config import settings
@@ -37,6 +39,14 @@ app.add_middleware(
 
 # Exception handlers
 app.add_exception_handler(AppException, app_exception_handler)
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "Registro duplicado ou violacao de constraint."},
+    )
 
 # Static files (uploads)
 app.mount("/uploads", StaticFiles(directory=settings.STORAGE_LOCAL_PATH), name="uploads")
