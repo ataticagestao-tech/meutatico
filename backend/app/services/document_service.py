@@ -21,7 +21,34 @@ class DocumentService:
         client_id: UUID | None = None,
         root_only: bool = True,
     ) -> list[dict]:
-        query = select(DocumentFolder)
+        # Subqueries para contar docs e subpastas em 1 query (elimina N+1)
+        doc_count_sub = (
+            select(
+                Document.folder_id,
+                func.count().label("doc_count"),
+            )
+            .where(Document.status == "active")
+            .group_by(Document.folder_id)
+            .subquery()
+        )
+        subfolder_count_sub = (
+            select(
+                DocumentFolder.parent_folder_id.label("parent_id"),
+                func.count().label("subfolder_count"),
+            )
+            .group_by(DocumentFolder.parent_folder_id)
+            .subquery()
+        )
+
+        query = (
+            select(
+                DocumentFolder,
+                func.coalesce(doc_count_sub.c.doc_count, 0).label("document_count"),
+                func.coalesce(subfolder_count_sub.c.subfolder_count, 0).label("subfolder_count"),
+            )
+            .outerjoin(doc_count_sub, DocumentFolder.id == doc_count_sub.c.folder_id)
+            .outerjoin(subfolder_count_sub, DocumentFolder.id == subfolder_count_sub.c.parent_id)
+        )
 
         if client_id:
             query = query.where(DocumentFolder.client_id == client_id)
@@ -35,42 +62,22 @@ class DocumentService:
 
         query = query.order_by(DocumentFolder.name.asc())
         result = await self.db.execute(query)
-        folders = result.scalars().all()
+        rows = result.all()
 
-        items = []
-        for f in folders:
-            # Conta documentos ativos na pasta
-            doc_count_result = await self.db.execute(
-                select(func.count())
-                .select_from(Document)
-                .where(
-                    Document.folder_id == f.id,
-                    Document.status == "active",
-                )
-            )
-            doc_count = doc_count_result.scalar()
-
-            # Conta subpastas
-            subfolder_count_result = await self.db.execute(
-                select(func.count())
-                .select_from(DocumentFolder)
-                .where(DocumentFolder.parent_folder_id == f.id)
-            )
-            subfolder_count = subfolder_count_result.scalar()
-
-            items.append({
-                "id": f.id,
-                "name": f.name,
-                "parent_folder_id": f.parent_folder_id,
-                "client_id": f.client_id,
-                "color": f.color,
-                "created_by": f.created_by,
-                "created_at": f.created_at,
-                "document_count": doc_count,
-                "subfolder_count": subfolder_count,
-            })
-
-        return items
+        return [
+            {
+                "id": row[0].id,
+                "name": row[0].name,
+                "parent_folder_id": row[0].parent_folder_id,
+                "client_id": row[0].client_id,
+                "color": row[0].color,
+                "created_by": row[0].created_by,
+                "created_at": row[0].created_at,
+                "document_count": row[1],
+                "subfolder_count": row[2],
+            }
+            for row in rows
+        ]
 
     async def create_folder(
         self, data: DocumentFolderCreate, created_by: UUID

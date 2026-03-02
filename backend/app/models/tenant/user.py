@@ -11,13 +11,13 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(GUID, nullable=False)
+    tenant_id = Column(GUID, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     avatar_url = Column(String(500))
     phone = Column(String(20))
-    is_active = Column(Boolean, nullable=False, default=True)
+    is_active = Column(Boolean, nullable=False, default=True, index=True)
     last_login_at = Column(DateTime(timezone=True))
     settings = Column(
         JSON,

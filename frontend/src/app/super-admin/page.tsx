@@ -14,9 +14,8 @@ export default function SuperAdminDashboard() {
     const fetchStats = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const token = localStorage.getItem("access_token");
         const res = await fetch(`${apiUrl}/super-admin/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
         });
         if (res.ok) {
           setStats(await res.json());

@@ -32,9 +32,10 @@ export default function LoginPage() {
       }
 
       const data = await res.json();
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("tenant", JSON.stringify(data.tenant));
+      // Access token agora é enviado como cookie httpOnly pelo backend
+      // Salvamos apenas dados não-sensíveis no sessionStorage (limpa ao fechar aba)
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("tenant", JSON.stringify(data.tenant));
 
       // Verifica se é super admin
       if (data.user.roles?.includes("super_admin")) {

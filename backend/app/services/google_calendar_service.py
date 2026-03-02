@@ -78,7 +78,7 @@ class GoogleCalendarService:
         access_token = data["access_token"]
         refresh_token = data.get("refresh_token", "")
         expires_in = data.get("expires_in", 3600)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
         # Get user email
         email = await self._fetch_email(access_token)
@@ -147,7 +147,7 @@ class GoogleCalendarService:
             return None
 
         # Refresh if expiring within 5 minutes
-        if token.token_expires_at <= datetime.now(timezone.utc) + timedelta(minutes=5):
+        if token.token_expires_at <= datetime.utcnow() + timedelta(minutes=5):
             refreshed = await self._refresh_token(token)
             if not refreshed:
                 return None
@@ -172,7 +172,7 @@ class GoogleCalendarService:
 
             token.access_token = data["access_token"]
             expires_in = data.get("expires_in", 3600)
-            token.token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+            token.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
             await self.db.flush()
             return True
         except Exception as e:
@@ -261,7 +261,7 @@ class GoogleCalendarService:
             logger.warning("Google Calendar POST %s failed: %s", path, e)
             return None
 
-    async def _api_patch(self, path: str, json_data: dict) -> dict | None:
+    async def _api_patch(self, path: str, json_data: dict, params: dict | None = None) -> dict | None:
         """Authenticated PATCH to Google Calendar API."""
         access = await self._get_access_token()
         if not access:
@@ -272,6 +272,7 @@ class GoogleCalendarService:
                     f"{CALENDAR_BASE}{path}",
                     headers={"Authorization": f"Bearer {access}"},
                     json=json_data,
+                    params=params,
                 )
                 resp.raise_for_status()
                 return resp.json()
@@ -323,6 +324,7 @@ class GoogleCalendarService:
         location: str | None = None,
         all_day: bool = False,
         with_meet: bool = False,
+        attendees: list[dict] | None = None,
     ) -> dict | None:
         """Create an event on Google Calendar. Optionally with Google Meet."""
         body: dict = {
@@ -338,6 +340,9 @@ class GoogleCalendarService:
             body["start"] = {"dateTime": start.isoformat(), "timeZone": "America/Sao_Paulo"}
             body["end"] = {"dateTime": end.isoformat(), "timeZone": "America/Sao_Paulo"}
 
+        if attendees:
+            body["attendees"] = [{"email": a["email"]} for a in attendees]
+
         if with_meet:
             body["conferenceData"] = {
                 "createRequest": {
@@ -346,8 +351,12 @@ class GoogleCalendarService:
                 },
             }
 
-        params = {"conferenceDataVersion": "1"} if with_meet else None
-        return await self._api_post("/calendars/primary/events", body, params=params)
+        params = {}
+        if with_meet:
+            params["conferenceDataVersion"] = "1"
+        if attendees:
+            params["sendUpdates"] = "all"
+        return await self._api_post("/calendars/primary/events", body, params=params or None)
 
     async def update_event(
         self,
@@ -358,6 +367,7 @@ class GoogleCalendarService:
         description: str | None = None,
         location: str | None = None,
         all_day: bool = False,
+        attendees: list[dict] | None = None,
     ) -> dict | None:
         """Update an existing Google Calendar event."""
         body: dict = {}
@@ -376,11 +386,15 @@ class GoogleCalendarService:
                 body["start"] = {"dateTime": start.isoformat(), "timeZone": "America/Sao_Paulo"}
                 body["end"] = {"dateTime": end.isoformat(), "timeZone": "America/Sao_Paulo"}
 
+        if attendees is not None:
+            body["attendees"] = [{"email": a["email"]} for a in attendees]
+
         if not body:
             return None
 
+        params = {"sendUpdates": "all"} if attendees is not None else None
         return await self._api_patch(
-            f"/calendars/primary/events/{google_event_id}", body
+            f"/calendars/primary/events/{google_event_id}", body, params=params
         )
 
     async def delete_event(self, google_event_id: str) -> bool:
@@ -437,6 +451,13 @@ class GoogleCalendarService:
             )
             existing = result.scalar_one_or_none()
 
+            # Extract attendees
+            raw_attendees = ge.get("attendees", [])
+            attendees_list = [
+                {"email": a["email"], "name": a.get("displayName", "")}
+                for a in raw_attendees if a.get("email")
+            ] or None
+
             if existing:
                 existing.title = ge.get("summary", "(sem titulo)")
                 existing.description = ge.get("description")
@@ -445,6 +466,7 @@ class GoogleCalendarService:
                 existing.start_date = start_dt
                 existing.end_date = end_dt
                 existing.all_day = all_day
+                existing.attendees = attendees_list
                 updated += 1
             else:
                 event = CalendarEvent(
@@ -458,6 +480,7 @@ class GoogleCalendarService:
                     sync_source="google",
                     location=ge.get("location"),
                     meet_link=meet_link,
+                    attendees=attendees_list,
                     created_by=self.user_id,
                 )
                 self.db.add(event)

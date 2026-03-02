@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime,
-    ForeignKey, String, Text,
+    ForeignKey, JSON, String, Text,
 )
 
 from app.database import Base, GUID
@@ -39,6 +39,7 @@ class CalendarEvent(Base):
     sync_source = Column(String(20), nullable=False, default="local")  # "local" | "google"
     location = Column(String(500), nullable=True)
     meet_link = Column(String(500), nullable=True)
+    attendees = Column(JSON, nullable=True)  # [{"email": "x@y.com", "name": "..."}]
 
     # Metadados
     created_by = Column(GUID, ForeignKey("users.id"))

@@ -12,9 +12,8 @@ export default function GlobalModulesPage() {
   const fetchModules = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${apiUrl}/super-admin/modules`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) setModules(await res.json());
     } finally {
@@ -28,10 +27,10 @@ export default function GlobalModulesPage() {
     e.preventDefault();
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${apiUrl}/super-admin/modules`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(form),
       });
       if (res.ok) {

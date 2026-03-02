@@ -14,8 +14,9 @@ export default function DashboardLayout({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    // Auth via cookie httpOnly — checamos sessionStorage (dados não-sensíveis do login)
+    const user = sessionStorage.getItem("user");
+    if (!user) {
       router.replace("/login");
       return;
     }

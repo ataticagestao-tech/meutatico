@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { getAccessToken, setAccessToken, removeAccessToken } from './auth'
+import { removeAccessToken } from './auth'
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
@@ -7,36 +7,23 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // send httpOnly refresh-token cookie
+  withCredentials: true, // envia cookies httpOnly automaticamente
 })
-
-// ---- Request interceptor: attach JWT -----------------------------------
-
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getAccessToken()
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error),
-)
 
 // ---- Response interceptor: auto-refresh on 401 -------------------------
 
 let isRefreshing = false
 let failedQueue: Array<{
-  resolve: (token: string) => void
+  resolve: () => void
   reject: (error: unknown) => void
 }> = []
 
-function processQueue(error: unknown, token: string | null = null) {
+function processQueue(error: unknown) {
   failedQueue.forEach((p) => {
     if (error) {
       p.reject(error)
     } else {
-      p.resolve(token!)
+      p.resolve()
     }
   })
   failedQueue = []
@@ -53,12 +40,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         // Queue this request while a refresh is already in flight
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject })
-        }).then((token) => {
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${token}`
-          }
+        }).then(() => {
+          // Cookie atualizado pelo backend — retry direto
           return api(originalRequest)
         })
       }
@@ -67,23 +52,18 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // The refresh token cookie is sent automatically
-        const { data } = await axios.post<{ access_token: string }>(
+        // O refresh_token cookie é enviado automaticamente
+        // O backend seta o novo access_token como cookie httpOnly
+        await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
           {},
           { withCredentials: true },
         )
 
-        const newToken = data.access_token
-        setAccessToken(newToken)
-        processQueue(null, newToken)
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
-        }
+        processQueue(null)
         return api(originalRequest)
       } catch (refreshError) {
-        processQueue(refreshError, null)
+        processQueue(refreshError)
         removeAccessToken()
 
         // Redirect to login when refresh fails

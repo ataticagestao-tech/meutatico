@@ -14,6 +14,9 @@ import {
   Building2,
   MapPin,
   Video,
+  Copy,
+  Check,
+  Users,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -59,6 +62,7 @@ export function CalendarDetailModal({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Edit state for events
   const [editTitle, setEditTitle] = useState("");
@@ -480,15 +484,48 @@ export function CalendarDetailModal({
 
               {item.meet_link && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Video size={16} className="text-blue-500" />
+                  <Video size={16} className="text-blue-500 shrink-0" />
                   <a
                     href={item.meet_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
+                    className="text-blue-500 hover:underline truncate"
                   >
                     Entrar na reunião (Google Meet)
                   </a>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.meet_link!);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="shrink-0 p-1 rounded hover:bg-background-tertiary text-foreground-tertiary hover:text-foreground-primary transition-colors"
+                    title="Copiar link"
+                  >
+                    {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              )}
+
+              {item.attendees && item.attendees.length > 0 && (
+                <div className="flex items-start gap-2 text-sm">
+                  <Users size={16} className="text-foreground-tertiary shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="text-foreground-tertiary text-xs font-medium">
+                      Participantes ({item.attendees.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.attendees.map((a) => (
+                        <a
+                          key={a.email}
+                          href={`mailto:${a.email}`}
+                          className="inline-flex items-center px-2 py-0.5 text-xs bg-background-tertiary text-foreground-secondary rounded-full hover:text-brand-primary transition-colors"
+                        >
+                          {a.name || a.email}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

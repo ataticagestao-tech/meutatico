@@ -18,6 +18,7 @@ class CalendarEventCreate(BaseModel):
     assigned_user_id: UUID | None = None
     location: str | None = None
     meet_link: str | None = None
+    attendees: list[dict] | None = None
 
 
 class CalendarEventUpdate(BaseModel):
@@ -33,6 +34,7 @@ class CalendarEventUpdate(BaseModel):
     assigned_user_id: UUID | None = None
     location: str | None = None
     meet_link: str | None = None
+    attendees: list[dict] | None = None
 
 
 class CalendarEventResponse(BaseModel):
@@ -51,6 +53,7 @@ class CalendarEventResponse(BaseModel):
     meet_link: str | None = None
     google_event_id: str | None = None
     sync_source: str | None = "local"
+    attendees: list[dict] | None = None
     created_by: UUID | None
     created_at: datetime
     updated_at: datetime
@@ -66,6 +69,7 @@ class CalendarItem(BaseModel):
     title: str
     description: str | None = None
     source_type: str  # "task" | "ticket" | "event"
+    type: str | None = None  # "meeting" | "reminder" | "deadline" | "other"
     start_date: datetime
     end_date: datetime
     all_day: bool = False
@@ -77,6 +81,7 @@ class CalendarItem(BaseModel):
     assigned_user_name: str | None = None
     location: str | None = None
     meet_link: str | None = None
+    attendees: list[dict] | None = None
 
     model_config = {"from_attributes": True}
 

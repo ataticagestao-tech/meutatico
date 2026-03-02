@@ -15,9 +15,8 @@ export default function PlansPage() {
   const fetchPlans = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${apiUrl}/super-admin/plans?per_page=50`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -34,7 +33,6 @@ export default function PlansPage() {
     e.preventDefault();
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const body = {
         ...form,
         price_monthly: parseFloat(form.price_monthly),
@@ -45,7 +43,8 @@ export default function PlansPage() {
       };
       const res = await fetch(`${apiUrl}/super-admin/plans`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
       if (res.ok) {

@@ -1,23 +1,29 @@
-const ACCESS_TOKEN_KEY = 'access_token'
+/**
+ * Auth utilities.
+ *
+ * O access_token é gerenciado como cookie httpOnly pelo backend,
+ * tornando-o inacessível via JavaScript (proteção contra XSS).
+ *
+ * O refresh_token também é cookie httpOnly e é enviado automaticamente
+ * pelo browser nas requisições para /auth/refresh.
+ *
+ * Dados não-sensíveis (user, tenant) ficam em sessionStorage
+ * (limpos ao fechar a aba).
+ */
 
 export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(ACCESS_TOKEN_KEY)
+  // Cookie httpOnly — inacessível via JS.
+  // O browser envia automaticamente via credentials: "include".
+  return null
 }
 
-export function setAccessToken(token: string): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(ACCESS_TOKEN_KEY, token)
+export function setAccessToken(_token: string): void {
+  // Noop — o backend seta o cookie httpOnly diretamente.
 }
 
 export function removeAccessToken(): void {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  // Limpa dados não-sensíveis do sessionStorage
+  sessionStorage.removeItem('user')
+  sessionStorage.removeItem('tenant')
 }
-
-/**
- * Refresh token is stored as an httpOnly cookie and
- * cannot be accessed from JavaScript. It is sent
- * automatically by the browser on requests to the
- * /auth/refresh endpoint.
- */

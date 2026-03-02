@@ -36,28 +36,14 @@ async def authorize(
 
 @router.get("/authorize-redirect")
 async def authorize_redirect(
-    token: str = Query(...),
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
-    """Redirect endpoint that validates token via query param, then redirects to Google.
-    Used when browser needs to navigate directly (can't send Authorization header)."""
-    from app.core.security import decode_token
-
-    payload = decode_token(token)
-    if not payload:
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_BASE_URL}/settings/integracoes?google=error&reason=invalid_token"
-        )
-
-    user_id = payload.get("sub")
-    if not user_id:
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_BASE_URL}/settings/integracoes?google=error&reason=invalid_token"
-        )
-
+    """Redirect to Google OAuth consent page.
+    Uses httpOnly cookie for auth (browser sends it automatically on navigation)."""
     svc = GoogleCalendarService.__new__(GoogleCalendarService)
     svc.db = None
-    svc.user_id = user_id
+    svc.user_id = current_user["id"]
     svc._token = None
 
     if not svc.is_configured:
@@ -65,7 +51,7 @@ async def authorize_redirect(
             url=f"{settings.FRONTEND_BASE_URL}/settings/integracoes?google=error&reason=not_configured"
         )
 
-    state = str(user_id)
+    state = str(current_user["id"])
     url = svc.get_authorize_url(state=state)
     return RedirectResponse(url=url)
 

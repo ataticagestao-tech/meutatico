@@ -115,6 +115,26 @@ export const CALENDAR_SOURCE_COLORS: Record<string, string> = {
   event: 'bg-violet-500',
 }
 
+// Cores para eventos do calendario por tipo (type)
+// deadline = Feriado Nacional (vermelho)
+// other = Comemorativo/Comercial (rosa)
+// reminder = Saude (azul)
+// meeting = Reuniao (violeta - padrao)
+export const CALENDAR_EVENT_TYPE_COLORS: Record<string, string> = {
+  deadline: 'bg-red-500',
+  other: 'bg-pink-400',
+  reminder: 'bg-blue-500',
+  meeting: 'bg-violet-500',
+}
+
+/** Retorna a cor de fundo para um item do calendario */
+export function getCalendarItemColor(item: { source_type: string; type?: string }): string {
+  if (item.source_type === 'event' && item.type) {
+    return CALENDAR_EVENT_TYPE_COLORS[item.type] || 'bg-violet-500'
+  }
+  return CALENDAR_SOURCE_COLORS[item.source_type] || 'bg-gray-500'
+}
+
 export const CALENDAR_SOURCE_TEXT_COLORS: Record<string, string> = {
   task: 'text-blue-600 dark:text-blue-400',
   ticket: 'text-amber-600 dark:text-amber-400',

@@ -215,7 +215,7 @@ export function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 py-3 px-3 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 py-3 px-3 overflow-y-auto scrollbar-dark">
         <div className="space-y-0.5">
           {menuItems.map((item) => {
             const active = isMenuActive(item);

@@ -11,7 +11,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { CalendarItem } from "@/types/calendar";
-import { CALENDAR_SOURCE_COLORS, CALENDAR_SOURCE_LABELS } from "@/lib/constants";
+import { getCalendarItemColor, CALENDAR_SOURCE_LABELS } from "@/lib/constants";
 
 interface CalendarDayViewProps {
   currentDate: Date;
@@ -20,8 +20,8 @@ interface CalendarDayViewProps {
   onItemClick: (item: CalendarItem) => void;
 }
 
-const START_HOUR = 6;
-const END_HOUR = 23;
+const START_HOUR = 8;
+const END_HOUR = 19;
 const HOUR_HEIGHT = 72;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 
@@ -85,7 +85,7 @@ export function CalendarDayView({
                 className={`
                   w-full text-left px-3 py-1.5 rounded-lg text-sm font-medium
                   text-white flex items-center gap-2
-                  ${CALENDAR_SOURCE_COLORS[item.source_type] || "bg-gray-500"}
+                  ${getCalendarItemColor(item)}
                   hover:opacity-80 transition-opacity
                 `}
               >
@@ -141,7 +141,7 @@ export function CalendarDayView({
                 className={`
                   absolute left-1 right-1 rounded-lg px-3 py-1.5
                   text-sm font-medium text-white overflow-hidden
-                  ${CALENDAR_SOURCE_COLORS[item.source_type] || "bg-gray-500"}
+                  ${getCalendarItemColor(item)}
                   hover:opacity-80 transition-opacity cursor-pointer
                 `}
                 style={style}

@@ -35,11 +35,10 @@ export default function TenantsPage() {
   const fetchTenants = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const params = new URLSearchParams({ page: "1", per_page: "50" });
       if (search) params.set("search", search);
       const res = await fetch(`${apiUrl}/super-admin/tenants?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,9 +52,8 @@ export default function TenantsPage() {
   const fetchPlans = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${apiUrl}/super-admin/plans?per_page=50`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -70,10 +68,10 @@ export default function TenantsPage() {
     e.preventDefault();
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${apiUrl}/super-admin/tenants`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(form),
       });
       if (res.ok) {

@@ -163,15 +163,9 @@ export default function IntegracoesPage() {
 
   async function handleGoogleConnect() {
     try {
-      // Get the token from localStorage to pass as query param for redirect
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No auth token found");
-        return;
-      }
-      // Navigate to the redirect endpoint with token as query param
+      // Cookie httpOnly é enviado automaticamente pelo browser
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-      window.location.href = `${baseUrl}/google-calendar/authorize-redirect?token=${encodeURIComponent(token)}`;
+      window.location.href = `${baseUrl}/google-calendar/authorize-redirect`;
     } catch (err) {
       console.error("Failed to start Google OAuth:", err);
     }

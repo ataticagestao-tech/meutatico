@@ -73,6 +73,29 @@ def decode_token(
         return None
 
 
+def create_reset_token(user_id: str, tenant_schema: str) -> str:
+    """Cria token JWT para reset de senha (expira em 30 minutos)."""
+    to_encode = {
+        "sub": user_id,
+        "tenant_schema": tenant_schema,
+        "type": "password_reset",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+    }
+    return jwt.encode(
+        to_encode,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def decode_reset_token(token: str) -> dict[str, Any] | None:
+    """Decodifica e valida token de reset de senha."""
+    payload = decode_token(token)
+    if payload and payload.get("type") == "password_reset":
+        return payload
+    return None
+
+
 def validate_password_strength(password: str) -> list[str]:
     """Valida requisitos de senha: min 8 chars, 1 maiuscula, 1 numero, 1 especial."""
     errors = []

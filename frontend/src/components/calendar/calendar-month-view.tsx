@@ -14,7 +14,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { CalendarItem } from "@/types/calendar";
-import { CALENDAR_SOURCE_COLORS } from "@/lib/constants";
+import { getCalendarItemColor } from "@/lib/constants";
 
 interface CalendarMonthViewProps {
   currentDate: Date;
@@ -23,7 +23,7 @@ interface CalendarMonthViewProps {
   onItemClick: (item: CalendarItem) => void;
 }
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex"];
 const MAX_VISIBLE = 3;
 
 export function CalendarMonthView({
@@ -36,7 +36,9 @@ export function CalendarMonthView({
   const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart, { locale: ptBR });
   const calEnd = endOfWeek(monthEnd, { locale: ptBR });
-  const days = eachDayOfInterval({ start: calStart, end: calEnd });
+  const days = eachDayOfInterval({ start: calStart, end: calEnd }).filter(
+    (day) => day.getDay() !== 0 && day.getDay() !== 6
+  );
 
   function getItemsForDay(day: Date): CalendarItem[] {
     return items.filter((item) => {
@@ -49,7 +51,7 @@ export function CalendarMonthView({
   return (
     <div className="bg-background-primary border border-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-7 border-b border-border">
+      <div className="grid grid-cols-5 border-b border-border">
         {WEEKDAYS.map((d) => (
           <div
             key={d}
@@ -61,7 +63,7 @@ export function CalendarMonthView({
       </div>
 
       {/* Days grid */}
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-5">
         {days.map((day, idx) => {
           const dayItems = getItemsForDay(day);
           const inMonth = isSameMonth(day, currentDate);
@@ -75,7 +77,7 @@ export function CalendarMonthView({
                 min-h-[100px] border-b border-r border-border p-1.5 cursor-pointer
                 transition-colors hover:bg-background-secondary
                 ${!inMonth ? "opacity-40" : ""}
-                ${idx % 7 === 0 ? "border-l-0" : ""}
+                ${idx % 5 === 0 ? "border-l-0" : ""}
               `}
             >
               {/* Day number */}
@@ -102,7 +104,7 @@ export function CalendarMonthView({
                     className={`
                       w-full text-left px-1.5 py-0.5 rounded text-[11px] font-medium
                       text-white truncate block
-                      ${CALENDAR_SOURCE_COLORS[item.source_type] || "bg-gray-500"}
+                      ${getCalendarItemColor(item)}
                       hover:opacity-80 transition-opacity
                     `}
                     title={item.title}

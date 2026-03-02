@@ -57,4 +57,22 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "app": settings.APP_NAME, "version": settings.APP_VERSION}
+    """Health check com verificacao do banco de dados."""
+    from sqlalchemy import text
+    from app.database import async_session_factory
+
+    db_ok = False
+    try:
+        async with async_session_factory() as session:
+            await session.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception:
+        pass
+
+    status = "ok" if db_ok else "degraded"
+    return {
+        "status": status,
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "database": "connected" if db_ok else "error",
+    }

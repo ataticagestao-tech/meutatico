@@ -20,14 +20,13 @@ export function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("tenant");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("tenant");
     router.push("/login");
   };
 
   const user = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("user") || '{"name":"Usuário"}')
+    ? JSON.parse(sessionStorage.getItem("user") || '{"name":"Usuário"}')
     : { name: "Usuário" };
 
   return (

@@ -1,3 +1,4 @@
+import logging
 import math
 from uuid import UUID
 
@@ -10,6 +11,11 @@ from app.models.tenant.client import Client, ClientContact, ClientPartner
 from app.models.tenant.user import User
 from app.schemas.client import ClientCreate, ClientUpdate
 from app.services.logo_service import LogoService
+
+logger = logging.getLogger(__name__)
+
+# Campos permitidos para ordenação (segurança)
+ALLOWED_SORT_FIELDS = {"created_at", "updated_at", "company_name", "trade_name", "status", "document_number"}
 
 
 class ClientService:
@@ -26,9 +32,19 @@ class ClientService:
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> dict:
-        query = select(Client).options(
-            selectinload(Client.contacts),
-            selectinload(Client.partners),
+        # Validação de sort_by
+        if sort_by not in ALLOWED_SORT_FIELDS:
+            sort_by = "created_at"
+
+        # Query com LEFT JOIN para resolver nomes em 1 query (elimina N+1)
+        responsible_user = select(User.id, User.name).subquery()
+        query = (
+            select(Client, responsible_user.c.name.label("responsible_user_name"))
+            .outerjoin(responsible_user, Client.responsible_user_id == responsible_user.c.id)
+            .options(
+                selectinload(Client.contacts),
+                selectinload(Client.partners),
+            )
         )
         count_query = select(func.count()).select_from(Client)
 
@@ -62,16 +78,12 @@ class ClientService:
 
         query = query.offset((page - 1) * per_page).limit(per_page)
         result = await self.db.execute(query)
-        clients = result.scalars().unique().all()
+        rows = result.unique().all()
 
         items = []
-        for c in clients:
-            resp_name = None
-            if c.responsible_user_id:
-                user_r = await self.db.execute(
-                    select(User.name).where(User.id == c.responsible_user_id)
-                )
-                resp_name = user_r.scalar_one_or_none()
+        for row in rows:
+            c = row[0]  # Client object
+            resp_name = row[1]  # responsible_user_name from JOIN
 
             items.append({
                 "id": c.id,
@@ -189,8 +201,8 @@ class ClientService:
                     client.logo_url = logo_url
                     client.logo_source = "auto"
                     await self.db.flush()
-            except Exception:
-                pass  # Não bloquear criação se logo falhar
+            except Exception as e:
+                logger.warning(f"Falha ao buscar logo para {client.email}: {e}")
 
         # Reload com contatos e sócios
         return await self.get_client(client.id)

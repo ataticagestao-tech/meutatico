@@ -2,11 +2,17 @@ export type CalendarSourceType = "task" | "ticket" | "event"
 export type CalendarEventType = "meeting" | "reminder" | "deadline" | "other"
 export type CalendarView = "month" | "week" | "day"
 
+export interface CalendarAttendee {
+  email: string
+  name?: string
+}
+
 export interface CalendarItem {
   id: string
   title: string
   description?: string
   source_type: CalendarSourceType
+  type?: CalendarEventType
   start_date: string
   end_date: string
   all_day: boolean
@@ -20,6 +26,7 @@ export interface CalendarItem {
   meet_link?: string
   google_event_id?: string
   sync_source?: "local" | "google"
+  attendees?: CalendarAttendee[]
 }
 
 export interface CalendarEventCreateRequest {
@@ -33,6 +40,7 @@ export interface CalendarEventCreateRequest {
   assigned_user_id?: string
   location?: string
   meet_link?: string
+  attendees?: CalendarAttendee[]
 }
 
 export interface CalendarEventUpdateRequest {
@@ -46,4 +54,5 @@ export interface CalendarEventUpdateRequest {
   assigned_user_id?: string
   location?: string
   meet_link?: string
+  attendees?: CalendarAttendee[]
 }

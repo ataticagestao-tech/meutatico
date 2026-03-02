@@ -22,8 +22,9 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    // Auth via cookie httpOnly — checamos sessionStorage (dados não-sensíveis do login)
+    const user = sessionStorage.getItem("user");
+    if (!user) {
       router.replace("/login");
       return;
     }
@@ -39,9 +40,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("tenant");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("tenant");
     router.push("/login");
   };
 

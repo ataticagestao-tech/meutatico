@@ -42,17 +42,17 @@ class Ticket(Base):
     category = Column(String(100))
 
     # Status
-    status = Column(String(20), nullable=False, default="open")
+    status = Column(String(20), nullable=False, default="open", index=True)
 
     # Origem
     source = Column(String(20), nullable=False, default="internal")
 
     # Relacionamentos
-    client_id = Column(GUID, ForeignKey("clients.id"))
+    client_id = Column(GUID, ForeignKey("clients.id"), index=True)
     requester_user_id = Column(GUID, ForeignKey("users.id"))
     requester_name = Column(String(255))
     requester_email = Column(String(255))
-    assigned_user_id = Column(GUID, ForeignKey("users.id"))
+    assigned_user_id = Column(GUID, ForeignKey("users.id"), index=True)
 
     # SLA
     due_date = Column(DateTime(timezone=True))

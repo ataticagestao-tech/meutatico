@@ -117,6 +117,7 @@ class CalendarService:
                     "title": ev.title,
                     "description": ev.description,
                     "source_type": "event",
+                    "type": ev.type,
                     "start_date": ev.start_date,
                     "end_date": ev.end_date,
                     "all_day": ev.all_day,
@@ -128,9 +129,17 @@ class CalendarService:
                     "assigned_user_name": await self._get_user_name(ev.assigned_user_id),
                     "location": ev.location,
                     "meet_link": ev.meet_link,
+                    "attendees": ev.attendees,
                 })
 
-        items.sort(key=lambda x: x["start_date"])
+        # Normalize datetimes for sorting (mix of naive/aware from different models)
+        def _sort_key(x):
+            dt = x["start_date"]
+            if dt.tzinfo is not None:
+                return dt.replace(tzinfo=None)
+            return dt
+
+        items.sort(key=_sort_key)
         return {"items": items, "total": len(items)}
 
     # ── CRUD de CalendarEvent ──
@@ -230,6 +239,7 @@ class CalendarService:
             "assigned_user_name": await self._get_user_name(event.assigned_user_id),
             "location": event.location,
             "meet_link": event.meet_link,
+            "attendees": event.attendees,
             "google_event_id": event.google_event_id,
             "sync_source": event.sync_source,
             "created_by": event.created_by,
@@ -258,6 +268,7 @@ class CalendarService:
             location=event.location,
             all_day=event.all_day,
             with_meet=with_meet,
+            attendees=event.attendees,
         )
         if result and result.get("id"):
             event.google_event_id = result["id"]
@@ -288,6 +299,7 @@ class CalendarService:
             description=event.description,
             location=event.location,
             all_day=event.all_day,
+            attendees=event.attendees,
         )
 
     async def _delete_on_google(self, event: CalendarEvent) -> None:

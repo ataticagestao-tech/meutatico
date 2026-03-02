@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { CalendarItem } from "@/types/calendar";
-import { CALENDAR_SOURCE_COLORS } from "@/lib/constants";
+import { getCalendarItemColor } from "@/lib/constants";
 
 interface CalendarWeekViewProps {
   currentDate: Date;
@@ -22,8 +22,8 @@ interface CalendarWeekViewProps {
   onItemClick: (item: CalendarItem) => void;
 }
 
-const START_HOUR = 6;
-const END_HOUR = 23;
+const START_HOUR = 8;
+const END_HOUR = 19;
 const HOUR_HEIGHT = 60;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 
@@ -34,7 +34,10 @@ export function CalendarWeekView({
   onItemClick,
 }: CalendarWeekViewProps) {
   const weekStart = startOfWeek(currentDate, { locale: ptBR });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Monday to Friday only (skip Sunday=index 0, Saturday=index 6)
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).filter(
+    (day) => day.getDay() !== 0 && day.getDay() !== 6
+  );
 
   const allDayItems = items.filter((it) => it.all_day);
   const timedItems = items.filter((it) => !it.all_day);
@@ -61,7 +64,7 @@ export function CalendarWeekView({
   return (
     <div className="bg-background-primary border border-border rounded-xl overflow-hidden">
       {/* Header with day names */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
+      <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border">
         <div className="border-r border-border" />
         {weekDays.map((day, i) => (
           <div
@@ -88,7 +91,7 @@ export function CalendarWeekView({
 
       {/* All-day events row */}
       {allDayItems.length > 0 && (
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
+        <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border">
           <div className="border-r border-border px-1 py-1.5 text-[10px] text-foreground-tertiary text-right">
             Dia todo
           </div>
@@ -103,7 +106,7 @@ export function CalendarWeekView({
                     className={`
                       w-full text-left px-1.5 py-0.5 rounded text-[11px] font-medium
                       text-white truncate block
-                      ${CALENDAR_SOURCE_COLORS[item.source_type] || "bg-gray-500"}
+                      ${getCalendarItemColor(item)}
                       hover:opacity-80 transition-opacity
                     `}
                     title={item.title}
@@ -118,7 +121,7 @@ export function CalendarWeekView({
       )}
 
       {/* Time grid */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] overflow-y-auto max-h-[600px]">
+      <div className="grid grid-cols-[60px_repeat(5,1fr)] overflow-y-auto max-h-[600px]">
         {/* Hour gutter + day columns */}
         <div className="border-r border-border">
           {HOURS.map((hour) => (
@@ -166,7 +169,7 @@ export function CalendarWeekView({
                     className={`
                       absolute left-0.5 right-0.5 rounded px-1.5 py-0.5
                       text-[11px] font-medium text-white overflow-hidden
-                      ${CALENDAR_SOURCE_COLORS[item.source_type] || "bg-gray-500"}
+                      ${getCalendarItemColor(item)}
                       hover:opacity-80 transition-opacity cursor-pointer
                     `}
                     style={style}

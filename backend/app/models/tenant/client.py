@@ -42,8 +42,8 @@ class Client(Base):
     address_zip = Column(String(10))
 
     # Gestão
-    status = Column(String(20), nullable=False, default="active")
-    responsible_user_id = Column(GUID, ForeignKey("users.id"))
+    status = Column(String(20), nullable=False, default="active", index=True)
+    responsible_user_id = Column(GUID, ForeignKey("users.id"), index=True)
     contracted_plan = Column(String(100))
     contract_start_date = Column(Date)
     contract_end_date = Column(Date)

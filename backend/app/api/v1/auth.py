@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.dependencies import get_current_user, get_db
 from app.schemas.auth import (
     ForgotPasswordRequest,
@@ -26,15 +27,28 @@ async def login(
     service = AuthService(db)
     result = await service.login(data.email, data.password)
 
+    is_secure = not settings.DEBUG
+
     # Seta refresh token como httpOnly cookie
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
-        secure=False,  # True em produção
+        secure=is_secure,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,  # 7 dias
         path="/api/v1/auth",
+    )
+
+    # Seta access token como httpOnly cookie (mais seguro que localStorage)
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/api/v1",
     )
 
     return {
@@ -47,6 +61,7 @@ async def login(
 
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh_token(
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
     refresh_token: str | None = Cookie(None),
 ):
@@ -56,6 +71,18 @@ async def refresh_token(
 
     service = AuthService(db)
     result = await service.refresh_token(refresh_token)
+
+    # Atualiza o access_token no cookie httpOnly
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="lax",
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/api/v1",
+    )
+
     return {"access_token": result["access_token"], "token_type": "bearer"}
 
 
@@ -70,6 +97,7 @@ async def logout(
         await service.logout(refresh_token)
 
     response.delete_cookie(key="refresh_token", path="/api/v1/auth")
+    response.delete_cookie(key="access_token", path="/api/v1")
     return {"message": "Logout realizado com sucesso"}
 
 
@@ -93,12 +121,18 @@ async def get_me(current_user: Annotated[dict, Depends(get_current_user)]):
 
 
 @router.post("/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest):
-    # TODO: Implementar envio de email
-    return {"message": "Se o email existir, um link de recuperação será enviado"}
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    service = AuthService(db)
+    return await service.forgot_password(data.email)
 
 
 @router.post("/reset-password")
-async def reset_password(data: ResetPasswordRequest):
-    # TODO: Implementar reset de senha
-    return {"message": "Senha alterada com sucesso"}
+async def reset_password(
+    data: ResetPasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    service = AuthService(db)
+    return await service.reset_password(data.token, data.new_password)

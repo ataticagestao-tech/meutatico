@@ -12,6 +12,9 @@ from app.models.tenant.ticket import Ticket, TicketMessage
 from app.models.tenant.user import User
 from app.schemas.ticket import TicketCreate, TicketMessageCreate, TicketUpdate
 
+# Campos permitidos para ordenação (segurança)
+ALLOWED_TICKET_SORT_FIELDS = {"created_at", "updated_at", "title", "priority", "status", "due_date", "ticket_number"}
+
 
 class TicketService:
     def __init__(self, db: AsyncSession):
@@ -31,7 +34,23 @@ class TicketService:
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> dict:
-        query = select(Ticket)
+        # Validação de sort_by
+        if sort_by not in ALLOWED_TICKET_SORT_FIELDS:
+            sort_by = "created_at"
+
+        # Subqueries para JOINs (elimina N+1)
+        client_sub = select(Client.id, Client.company_name).subquery()
+        user_sub = select(User.id, User.name).subquery()
+
+        query = (
+            select(
+                Ticket,
+                client_sub.c.company_name.label("client_name"),
+                user_sub.c.name.label("assigned_user_name"),
+            )
+            .outerjoin(client_sub, Ticket.client_id == client_sub.c.id)
+            .outerjoin(user_sub, Ticket.assigned_user_id == user_sub.c.id)
+        )
         count_query = select(func.count()).select_from(Ticket)
 
         if search:
@@ -80,24 +99,13 @@ class TicketService:
 
         query = query.offset((page - 1) * per_page).limit(per_page)
         result = await self.db.execute(query)
-        tickets = result.scalars().all()
+        rows = result.unique().all()
 
         items = []
-        for t in tickets:
-            # Resolve nomes relacionados
-            client_name = None
-            if t.client_id:
-                c_result = await self.db.execute(
-                    select(Client.company_name).where(Client.id == t.client_id)
-                )
-                client_name = c_result.scalar_one_or_none()
-
-            assigned_user_name = None
-            if t.assigned_user_id:
-                u_result = await self.db.execute(
-                    select(User.name).where(User.id == t.assigned_user_id)
-                )
-                assigned_user_name = u_result.scalar_one_or_none()
+        for row in rows:
+            t = row[0]  # Ticket object
+            client_name = row[1]  # from JOIN
+            assigned_user_name = row[2]  # from JOIN
 
             items.append({
                 "id": t.id,
@@ -134,39 +142,46 @@ class TicketService:
         }
 
     async def get_ticket(self, ticket_id: UUID) -> dict:
+        # JOINs para resolver client_name e assigned_user_name em 1 query
+        client_sub = select(Client.id, Client.company_name).subquery()
+        user_sub = select(User.id, User.name).subquery()
+
         result = await self.db.execute(
-            select(Ticket)
+            select(
+                Ticket,
+                client_sub.c.company_name.label("client_name"),
+                user_sub.c.name.label("assigned_user_name"),
+            )
+            .outerjoin(client_sub, Ticket.client_id == client_sub.c.id)
+            .outerjoin(user_sub, Ticket.assigned_user_id == user_sub.c.id)
             .options(selectinload(Ticket.messages))
             .where(Ticket.id == ticket_id)
         )
-        ticket = result.scalar_one_or_none()
-        if not ticket:
+        row = result.unique().one_or_none()
+        if not row:
             raise NotFoundException("Solicita\u00e7\u00e3o n\u00e3o encontrada")
 
-        # Resolve nomes
-        client_name = None
-        if ticket.client_id:
-            c_result = await self.db.execute(
-                select(Client.company_name).where(Client.id == ticket.client_id)
-            )
-            client_name = c_result.scalar_one_or_none()
+        ticket = row[0]
+        client_name = row[1]
+        assigned_user_name = row[2]
 
-        assigned_user_name = None
-        if ticket.assigned_user_id:
-            u_result = await self.db.execute(
-                select(User.name).where(User.id == ticket.assigned_user_id)
+        # Resolve nomes dos autores em batch (1 query em vez de N)
+        author_ids = [
+            msg.author_user_id for msg in ticket.messages
+            if msg.author_user_id and not msg.author_name
+        ]
+        author_map = {}
+        if author_ids:
+            authors_result = await self.db.execute(
+                select(User.id, User.name).where(User.id.in_(author_ids))
             )
-            assigned_user_name = u_result.scalar_one_or_none()
+            author_map = {str(uid): name for uid, name in authors_result.all()}
 
-        # Resolve nomes dos autores nas mensagens
         messages = []
         for msg in ticket.messages:
             author_name = msg.author_name
             if not author_name and msg.author_user_id:
-                a_result = await self.db.execute(
-                    select(User.name).where(User.id == msg.author_user_id)
-                )
-                author_name = a_result.scalar_one_or_none()
+                author_name = author_map.get(str(msg.author_user_id))
 
             messages.append({
                 "id": msg.id,

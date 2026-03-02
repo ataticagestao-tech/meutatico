@@ -15,9 +15,8 @@ export default function TenantDetailPage() {
     const fetchTenant = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const token = localStorage.getItem("access_token");
         const res = await fetch(`${apiUrl}/super-admin/tenants/${params.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
         });
         if (res.ok) setTenant(await res.json());
       } finally {
@@ -29,10 +28,10 @@ export default function TenantDetailPage() {
 
   const updateStatus = async (status: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const token = localStorage.getItem("access_token");
     await fetch(`${apiUrl}/super-admin/tenants/${params.id}/status`, {
       method: "PATCH",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ status }),
     });
     setTenant({ ...tenant, status });

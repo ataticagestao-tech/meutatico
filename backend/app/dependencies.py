@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,7 @@ from app.models.tenant.user import User, UserRole
 from app.models.tenant.role import Role, RolePermission
 from app.models.tenant.permission import Permission
 
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 tenant_middleware = TenantMiddleware()
 
 
@@ -33,11 +33,28 @@ async def get_db():
 
 
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security_scheme)],
+    request: Request,
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    access_token: Optional[str] = Cookie(None),
 ) -> dict:
-    """Extrai e valida o usuário atual do JWT token."""
-    token = credentials.credentials
+    """Extrai e valida o usuário atual do JWT token.
+    Aceita token via header Authorization OU cookie httpOnly (mais seguro).
+    """
+    # Prioridade: 1) Header Authorization, 2) Cookie httpOnly
+    token = None
+    if credentials:
+        token = credentials.credentials
+    elif access_token:
+        token = access_token
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token não fornecido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = decode_token(token)
 
     if not payload or payload.get("type") != "access":

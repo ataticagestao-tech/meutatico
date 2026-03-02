@@ -1,5 +1,9 @@
-from pydantic import field_validator
+import logging
+
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -77,6 +81,22 @@ class Settings(BaseSettings):
                 return json.loads(v)
             return [origin.strip() for origin in v.split(",")]
         return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self):
+        """Alerta se secrets padrão estiverem em uso fora do modo DEBUG."""
+        if not self.DEBUG:
+            if "dev-secret" in self.JWT_SECRET_KEY or len(self.JWT_SECRET_KEY) < 32:
+                logger.warning(
+                    "ALERTA DE SEGURANCA: JWT_SECRET_KEY usa valor padrao ou muito curto! "
+                    "Defina uma chave segura no .env para producao."
+                )
+            if "dev-super-admin" in self.SUPER_ADMIN_SECRET_KEY:
+                logger.warning(
+                    "ALERTA DE SEGURANCA: SUPER_ADMIN_SECRET_KEY usa valor padrao! "
+                    "Defina uma chave segura no .env para producao."
+                )
+        return self
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

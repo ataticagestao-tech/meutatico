@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Calendar, CheckSquare, Ticket, MapPin, Video } from "lucide-react";
+import { Plus, X, Calendar, CheckSquare, Ticket, MapPin, Video, Users } from "lucide-react";
 import { format } from "date-fns";
 import api from "@/lib/api";
 import {
@@ -54,7 +54,6 @@ export function CalendarCreateModal({
   const [startTime, setStartTime] = useState(
     initialHour != null ? `${String(initialHour).padStart(2, "0")}:00` : "09:00"
   );
-  const [endDate, setEndDate] = useState(format(initialDate, "yyyy-MM-dd"));
   const [endTime, setEndTime] = useState(
     initialHour != null
       ? `${String(initialHour + 1).padStart(2, "0")}:00`
@@ -62,9 +61,11 @@ export function CalendarCreateModal({
   );
   const [allDay, setAllDay] = useState(false);
 
-  // Location & Meet
+  // Location, Meet & Attendees
   const [location, setLocation] = useState("");
   const [generateMeet, setGenerateMeet] = useState(false);
+  const [attendees, setAttendees] = useState<{ email: string }[]>([]);
+  const [attendeeInput, setAttendeeInput] = useState("");
 
   // Shared fields
   const [priority, setPriority] = useState("medium");
@@ -81,6 +82,8 @@ export function CalendarCreateModal({
     setAllDay(false);
     setLocation("");
     setGenerateMeet(false);
+    setAttendees([]);
+    setAttendeeInput("");
     setPriority("medium");
     setAssignedUserId("");
     setClientId("");
@@ -97,8 +100,8 @@ export function CalendarCreateModal({
           ? `${startDate}T00:00:00`
           : `${startDate}T${startTime}:00`;
         const end = allDay
-          ? `${endDate}T23:59:59`
-          : `${endDate}T${endTime}:00`;
+          ? `${startDate}T23:59:59`
+          : `${startDate}T${endTime}:00`;
 
         await api.post("/calendar", {
           title: title.trim(),
@@ -111,6 +114,7 @@ export function CalendarCreateModal({
           assigned_user_id: assignedUserId || undefined,
           location: location.trim() || undefined,
           meet_link: generateMeet ? "auto" : undefined,
+          attendees: attendees.length > 0 ? attendees : undefined,
         });
       } else if (tab === "task") {
         await api.post("/tasks", {
@@ -244,9 +248,9 @@ export function CalendarCreateModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={`grid ${allDay ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
                 <div>
-                  <label className={labelClass}>Inicio</label>
+                  <label className={labelClass}>Data</label>
                   <input
                     type="date"
                     value={startDate}
@@ -255,38 +259,26 @@ export function CalendarCreateModal({
                   />
                 </div>
                 {!allDay && (
-                  <div>
-                    <label className={labelClass}>Hora inicio</label>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Fim</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                {!allDay && (
-                  <div>
-                    <label className={labelClass}>Hora fim</label>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className={labelClass}>Hora inicio</label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Hora fim</label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               {/* Location */}
@@ -318,6 +310,68 @@ export function CalendarCreateModal({
                     Gerar link Google Meet
                   </span>
                 </label>
+              </div>
+
+              {/* Attendees / Participantes */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-foreground-secondary mb-1.5">
+                  <Users size={14} />
+                  Participantes
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={attendeeInput}
+                    onChange={(e) => setAttendeeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const email = attendeeInput.trim().toLowerCase();
+                        if (email && email.includes("@") && !attendees.some((a) => a.email === email)) {
+                          setAttendees([...attendees, { email }]);
+                          setAttendeeInput("");
+                        }
+                      }
+                    }}
+                    placeholder="email@exemplo.com"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const email = attendeeInput.trim().toLowerCase();
+                      if (email && email.includes("@") && !attendees.some((a) => a.email === email)) {
+                        setAttendees([...attendees, { email }]);
+                        setAttendeeInput("");
+                      }
+                    }}
+                    className="shrink-0 h-10 px-3 bg-brand-primary text-white rounded-lg text-sm font-medium hover:opacity-90"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                {attendees.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {attendees.map((a) => (
+                      <span
+                        key={a.email}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-background-tertiary text-foreground-secondary rounded-full"
+                      >
+                        {a.email}
+                        <button
+                          type="button"
+                          onClick={() => setAttendees(attendees.filter((att) => att.email !== a.email))}
+                          className="p-0.5 hover:text-red-500 transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-foreground-tertiary mt-1">
+                  Os participantes recebem o convite automaticamente via Google Calendar.
+                </p>
               </div>
             </>
           )}
