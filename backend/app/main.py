@@ -13,6 +13,10 @@ from app.exceptions import AppException, app_exception_handler
 async def lifespan(app: FastAPI):
     # Startup
     import os
+    from app.database import engine, Base
+    from app import models  # noqa
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     os.makedirs(settings.STORAGE_LOCAL_PATH, exist_ok=True)
     yield
     # Shutdown
