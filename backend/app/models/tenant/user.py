@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime, timezone
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, JSON, String
 from sqlalchemy.orm import relationship
+
 from app.database import Base, GUID
 
 
@@ -33,7 +35,12 @@ class User(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan", foreign_keys="[UserRole.user_id]")
+    user_roles = relationship(
+        "UserRole",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="[UserRole.user_id]",
+    )
 
 
 class UserRole(Base):
@@ -59,4 +66,3 @@ class UserRole(Base):
     user = relationship("User", back_populates="user_roles", foreign_keys=[user_id])
     assigner = relationship("User", foreign_keys=[assigned_by])
     role = relationship("Role", back_populates="role_users")
-    
