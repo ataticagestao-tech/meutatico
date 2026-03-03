@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Tatica Gestap"
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = ["https://meutatico.site", "http://localhost:3000"]
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
