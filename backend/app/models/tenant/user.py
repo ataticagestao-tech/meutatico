@@ -1,9 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, JSON, String
 from sqlalchemy.orm import relationship
-
 from app.database import Base, GUID
 
 
@@ -11,13 +9,13 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(GUID, nullable=False, index=True)
+    tenant_id = Column(GUID, nullable=False)
     name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     avatar_url = Column(String(500))
     phone = Column(String(20))
-    is_active = Column(Boolean, nullable=False, default=True, index=True)
+    is_active = Column(Boolean, nullable=False, default=True)
     last_login_at = Column(DateTime(timezone=True))
     settings = Column(
         JSON,
@@ -59,4 +57,6 @@ class UserRole(Base):
     assigned_by = Column(GUID, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="user_roles", foreign_keys=[user_id])
+    assigner = relationship("User", foreign_keys=[assigned_by])
     role = relationship("Role", back_populates="role_users")
+    
