@@ -83,6 +83,14 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
+    def ensure_frontend_in_cors(self):
+        """Garante que FRONTEND_BASE_URL esteja sempre em CORS_ORIGINS."""
+        frontend = self.FRONTEND_BASE_URL.rstrip("/")
+        if frontend and frontend not in self.CORS_ORIGINS:
+            self.CORS_ORIGINS.append(frontend)
+        return self
+
+    @model_validator(mode="after")
     def validate_production_secrets(self):
         """Alerta se secrets padrão estiverem em uso fora do modo DEBUG."""
         if not self.DEBUG:

@@ -27,15 +27,17 @@ async def login(
     service = AuthService(db)
     result = await service.login(data.email, data.password)
 
-    is_secure = not settings.DEBUG
+    is_production = not settings.DEBUG
+    # Cross-domain (frontend e backend em dominios diferentes) exige SameSite=None + Secure
+    same_site: str = "none" if is_production else "lax"
 
     # Seta refresh token como httpOnly cookie
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
         httponly=True,
-        secure=is_secure,
-        samesite="lax",
+        secure=is_production,
+        samesite=same_site,
         max_age=7 * 24 * 60 * 60,  # 7 dias
         path="/api/v1/auth",
     )
@@ -45,8 +47,8 @@ async def login(
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=is_secure,
-        samesite="lax",
+        secure=is_production,
+        samesite=same_site,
         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/api/v1",
     )
@@ -73,12 +75,13 @@ async def refresh_token(
     result = await service.refresh_token(refresh_token)
 
     # Atualiza o access_token no cookie httpOnly
+    is_production = not settings.DEBUG
     response.set_cookie(
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=not settings.DEBUG,
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/api/v1",
     )
@@ -96,8 +99,15 @@ async def logout(
         service = AuthService(db)
         await service.logout(refresh_token)
 
-    response.delete_cookie(key="refresh_token", path="/api/v1/auth")
-    response.delete_cookie(key="access_token", path="/api/v1")
+    is_production = not settings.DEBUG
+    response.delete_cookie(
+        key="refresh_token", path="/api/v1/auth",
+        secure=is_production, samesite="none" if is_production else "lax",
+    )
+    response.delete_cookie(
+        key="access_token", path="/api/v1",
+        secure=is_production, samesite="none" if is_production else "lax",
+    )
     return {"message": "Logout realizado com sucesso"}
 
 
