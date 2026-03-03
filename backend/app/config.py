@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     INSTAGRAM_BUSINESS_ACCOUNT_ID: str = ""
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = ["https://meutatico.site", "http://localhost:3000"]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

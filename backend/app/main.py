@@ -15,6 +15,10 @@ from app.exceptions import AppException, app_exception_handler
 async def lifespan(app: FastAPI):
     # Startup
     import os
+    from app.database import engine, Base
+    from app import models  # noqa
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     os.makedirs(settings.STORAGE_LOCAL_PATH, exist_ok=True)
     yield
     # Shutdown
@@ -31,7 +35,7 @@ app = FastAPI(
 # CORS — allow_credentials=True exige origens explícitas (não aceita "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
