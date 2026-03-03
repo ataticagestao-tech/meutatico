@@ -58,5 +58,6 @@ class UserRole(Base):
     )
     assigned_by = Column(GUID, ForeignKey("users.id"))
 
-    user = relationship("User", back_populates="user_roles", foreign_keys=[user_id])
+    user = relationship("User", back_populates="user_roles", foreign_keys="[UserRole.user_id]")
+assigner = relationship("User", foreign_keys="[UserRole.assigned_by]")
     role = relationship("Role", back_populates="role_users")
