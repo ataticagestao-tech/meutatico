@@ -206,8 +206,23 @@ class EvolutionService:
 
     # ── Webhook Processing ──────────────────────────────
 
+    async def _resolve_tenant_id(self) -> None:
+        """Resolve tenant_id from instance name if not set."""
+        if self.tenant_id:
+            return
+        stmt = select(WhatsAppInstance).where(
+            WhatsAppInstance.instance_name == self.instance,
+        )
+        res = await self.db.execute(stmt)
+        inst = res.scalar_one_or_none()
+        if inst:
+            self.tenant_id = str(inst.tenant_id)
+
     async def process_webhook(self, payload: dict) -> None:
         """Process incoming webhook from Evolution API."""
+        # Resolve tenant_id from instance (webhook has no auth context)
+        await self._resolve_tenant_id()
+
         event = payload.get("event")
 
         if event == "messages.upsert":
@@ -218,37 +233,49 @@ class EvolutionService:
     async def _handle_incoming_message(self, data: dict) -> None:
         """Process incoming message and trigger chatbot if applicable."""
         key = data.get("key", {})
-        if key.get("fromMe"):
-            return  # Ignore outbound messages
+        from_me = key.get("fromMe", False)
 
         remote_jid = key.get("remoteJid", "")
+        # Skip status broadcasts and group messages
+        if remote_jid == "status@broadcast" or "@g.us" in remote_jid:
+            return
+
         phone = remote_jid.split("@")[0] if "@" in remote_jid else remote_jid
-        content = data.get("message", {}).get("conversation") or data.get("message", {}).get("extendedTextMessage", {}).get("text", "")
+        message_data = data.get("message", {}) or {}
+        content = (
+            message_data.get("conversation")
+            or message_data.get("extendedTextMessage", {}).get("text")
+            or message_data.get("imageMessage", {}).get("caption")
+            or message_data.get("documentMessage", {}).get("fileName")
+            or ""
+        )
         msg_type = "text"
 
-        if data.get("message", {}).get("imageMessage"):
+        if message_data.get("imageMessage"):
             msg_type = "image"
-        elif data.get("message", {}).get("documentMessage"):
+        elif message_data.get("documentMessage"):
             msg_type = "document"
-        elif data.get("message", {}).get("audioMessage"):
+        elif message_data.get("audioMessage"):
             msg_type = "audio"
+        elif message_data.get("videoMessage"):
+            msg_type = "video"
 
-        # Save inbound message
-        if self.tenant_id and content:
+        # Save message to local database
+        if self.tenant_id:
             msg = WhatsAppMessage(
                 tenant_id=self.tenant_id,
-                direction="inbound",
-                from_phone=phone,
-                to_phone="me",
+                direction="outbound" if from_me else "inbound",
+                from_phone="me" if from_me else phone,
+                to_phone=phone if from_me else "me",
                 message_type=msg_type,
-                content=content,
-                status="received",
+                content=content or f"[{msg_type}]",
+                status="sent" if from_me else "received",
             )
             self.db.add(msg)
             await self.db.flush()
 
-        # Check chatbot rules
-        if content and self.tenant_id:
+        # Check chatbot rules for inbound messages
+        if content and self.tenant_id and not from_me:
             await self._check_chatbot(phone, content)
 
     async def _handle_connection_update(self, data: dict) -> None:
@@ -284,109 +311,108 @@ class EvolutionService:
                 await self.send_text(phone, rule.response_message)
                 break
 
-    # ── Chat / Message Fetching ────────────────────────
+    # ── Chat / Message Fetching (local DB) ───────────────
 
     async def fetch_chats(self, search: str | None = None) -> list[dict]:
-        """Fetch chat list from Evolution API."""
-        result = await self._api_post(f"/chat/findChats/{self.instance}", {})
-        if not result or not isinstance(result, list):
+        """Fetch chat list from local WhatsAppMessage table."""
+        from sqlalchemy import case, func, literal_column
+
+        if not self.tenant_id:
             return []
+
+        # Get distinct contacts with last message info
+        # A "contact" is the phone number that is NOT "me"
+        phone_col = case(
+            (WhatsAppMessage.direction == "inbound", WhatsAppMessage.from_phone),
+            else_=WhatsAppMessage.to_phone,
+        )
+
+        stmt = (
+            select(
+                phone_col.label("phone"),
+                func.max(WhatsAppMessage.created_at).label("last_at"),
+                func.count().label("msg_count"),
+            )
+            .where(WhatsAppMessage.tenant_id == self.tenant_id)
+            .group_by(literal_column("phone"))
+            .order_by(func.max(WhatsAppMessage.created_at).desc())
+        )
+
+        result = await self.db.execute(stmt)
+        rows = result.all()
 
         chats = []
-        for chat in result:
-            remote_jid = chat.get("id") or chat.get("remoteJid") or ""
-            # Skip group chats and status broadcasts
-            if "@g.us" in remote_jid or remote_jid == "status@broadcast":
+        for row in rows:
+            phone = row.phone
+            if not phone or phone == "me":
                 continue
 
-            phone = remote_jid.split("@")[0] if "@" in remote_jid else remote_jid
-            name = chat.get("name") or chat.get("pushName") or phone
-
             if search:
-                s = search.lower()
-                if s not in name.lower() and s not in phone:
+                if search.lower() not in phone:
                     continue
 
-            # Extract last message preview
-            last_msg = chat.get("lastMessage", {}) or {}
-            last_msg_content = (
-                last_msg.get("message", {}).get("conversation")
-                or last_msg.get("message", {}).get("extendedTextMessage", {}).get("text")
-                or ""
+            # Get last message content
+            last_msg_stmt = (
+                select(WhatsAppMessage.content)
+                .where(
+                    WhatsAppMessage.tenant_id == self.tenant_id,
+                    (
+                        (WhatsAppMessage.from_phone == phone)
+                        | (WhatsAppMessage.to_phone == phone)
+                    ),
+                )
+                .order_by(WhatsAppMessage.created_at.desc())
+                .limit(1)
             )
+            last_msg_result = await self.db.execute(last_msg_stmt)
+            last_content = last_msg_result.scalar_one_or_none() or ""
 
             chats.append({
-                "id": remote_jid,
-                "name": name,
+                "id": phone,
+                "name": phone,
                 "phone_number": phone,
                 "custom_name": None,
-                "avatar_url": chat.get("profilePictureUrl"),
-                "last_message": last_msg_content[:80] if last_msg_content else None,
-                "last_message_at": chat.get("updatedAt") or chat.get("lastMsgTimestamp"),
-                "unread_count": chat.get("unreadCount", 0),
+                "avatar_url": None,
+                "last_message": last_content[:80] if last_content else None,
+                "last_message_at": row.last_at.isoformat() if row.last_at else None,
+                "unread_count": 0,
             })
 
-        # Sort by most recent activity
-        chats.sort(key=lambda c: c.get("last_message_at") or "", reverse=True)
         return chats
 
-    async def fetch_messages(self, remote_jid: str, limit: int = 50) -> list[dict]:
-        """Fetch messages for a specific chat from Evolution API."""
-        body = {
-            "where": {
-                "key": {
-                    "remoteJid": remote_jid,
-                },
-            },
-            "limit": limit,
-        }
-        result = await self._api_post(f"/chat/findMessages/{self.instance}", body)
-        if not result or not isinstance(result, list):
+    async def fetch_messages(self, phone: str, limit: int = 50) -> list[dict]:
+        """Fetch messages for a specific contact from local DB."""
+        if not self.tenant_id:
             return []
 
-        # Some versions wrap in {"messages": {"records": [...]}}
-        if isinstance(result, dict):
-            result = result.get("messages", {}).get("records", []) or result.get("records", [])
+        # Remove @s.whatsapp.net suffix if present
+        phone_clean = phone.split("@")[0] if "@" in phone else phone
+
+        stmt = (
+            select(WhatsAppMessage)
+            .where(
+                WhatsAppMessage.tenant_id == self.tenant_id,
+                (
+                    (WhatsAppMessage.from_phone == phone_clean)
+                    | (WhatsAppMessage.to_phone == phone_clean)
+                ),
+            )
+            .order_by(WhatsAppMessage.created_at.desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        rows = result.scalars().all()
 
         messages = []
-        for msg in result:
-            key = msg.get("key", {})
-            message_data = msg.get("message", {}) or {}
-
-            content = (
-                message_data.get("conversation")
-                or message_data.get("extendedTextMessage", {}).get("text")
-                or message_data.get("imageMessage", {}).get("caption")
-                or message_data.get("documentMessage", {}).get("fileName")
-                or ""
-            )
-
-            msg_type = "text"
-            if message_data.get("imageMessage"):
-                msg_type = "image"
-            elif message_data.get("documentMessage"):
-                msg_type = "document"
-            elif message_data.get("audioMessage"):
-                msg_type = "audio"
-            elif message_data.get("videoMessage"):
-                msg_type = "video"
-
-            timestamp = msg.get("messageTimestamp")
-            if isinstance(timestamp, (int, float)):
-                from datetime import datetime, timezone
-                timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
-            elif isinstance(timestamp, str) and timestamp.isdigit():
-                from datetime import datetime, timezone
-                timestamp = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).isoformat()
-
+        for msg in rows:
             messages.append({
-                "id": key.get("id", msg.get("id", "")),
-                "content": content,
-                "from_me": key.get("fromMe", False),
-                "message_type": msg_type,
+                "id": str(msg.id),
+                "content": msg.content or "",
+                "from_me": msg.direction == "outbound",
+                "message_type": msg.message_type or "text",
                 "media_url": None,
-                "timestamp": timestamp or msg.get("createdAt") or "",
-                "status": msg.get("status", ""),
+                "timestamp": msg.created_at.isoformat() if msg.created_at else "",
+                "status": msg.status or "",
             })
 
         return messages

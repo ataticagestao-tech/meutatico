@@ -91,6 +91,8 @@ function ConversasTab() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
 
   async function fetchContacts(searchTerm?: string) {
     try {
@@ -155,6 +157,23 @@ function ConversasTab() {
     return () => clearInterval(interval);
   }, [selectedContact]);
 
+  function startNewChat() {
+    if (!newPhone.trim()) return;
+    const phone = newPhone.trim().replace(/\D/g, "");
+    if (phone.length < 8) return;
+    const contact: WhatsAppContact = {
+      id: phone,
+      name: phone,
+      phone_number: phone,
+      custom_name: null,
+      avatar_url: null,
+    };
+    setSelectedContact(contact);
+    setMessages([]);
+    setShowNewChat(false);
+    setNewPhone("");
+  }
+
   async function handleSend() {
     if (!newMessage.trim() || !selectedContact) return;
     const phone = selectedContact.phone_number || selectedContact.id.split("@")[0];
@@ -179,8 +198,11 @@ function ConversasTab() {
         ...prev,
       ]);
       setNewMessage("");
-      // Refresh messages from server after a short delay
-      setTimeout(() => loadMessages(selectedContact.id), 2000);
+      // Refresh messages and contacts after a short delay
+      setTimeout(() => {
+        loadMessages(selectedContact.id);
+        fetchContacts();
+      }, 2000);
     } catch {
       alert("Erro ao enviar mensagem");
     } finally {
@@ -223,23 +245,63 @@ function ConversasTab() {
         {/* Contact list */}
         <div className="lg:col-span-1 flex flex-col">
           <div className="bg-background-primary border border-border rounded-xl flex-1 flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-border">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar contatos..."
-                  className="w-full h-9 pl-8 pr-3 border border-border rounded-lg bg-background-secondary text-foreground-primary text-sm"
-                />
+            <div className="p-3 border-b border-border space-y-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar contatos..."
+                    className="w-full h-9 pl-8 pr-3 border border-border rounded-lg bg-background-secondary text-foreground-primary text-sm"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowNewChat(!showNewChat)}
+                  className="h-9 w-9 flex items-center justify-center bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shrink-0"
+                  title="Nova conversa"
+                >
+                  <Plus size={16} />
+                </button>
               </div>
+              {showNewChat && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && startNewChat()}
+                    placeholder="Telefone (ex: 5535999...)"
+                    className="flex-1 h-9 px-3 border border-border rounded-lg bg-background-secondary text-foreground-primary text-sm"
+                  />
+                  <button
+                    onClick={startNewChat}
+                    disabled={!newPhone.trim()}
+                    className="h-9 px-3 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  >
+                    Iniciar
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto">
               {contacts.length === 0 ? (
                 <div className="p-8 text-center">
                   <MessageSquare size={32} className="mx-auto mb-2 text-foreground-tertiary opacity-50" />
-                  <p className="text-sm text-foreground-tertiary">Nenhum contato</p>
+                  <p className="text-sm text-foreground-tertiary">
+                    {status?.connected
+                      ? "Nenhuma conversa ainda. Envie ou receba uma mensagem para iniciar."
+                      : "Conecte o WhatsApp na aba Conexão"}
+                  </p>
+                  {status?.connected && (
+                    <button
+                      onClick={() => setShowNewChat(true)}
+                      className="mt-3 text-xs text-brand-primary hover:underline"
+                    >
+                      Iniciar nova conversa
+                    </button>
+                  )}
                 </div>
               ) : (
                 contacts.map((c) => (
