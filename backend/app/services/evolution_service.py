@@ -197,7 +197,7 @@ class EvolutionService:
                 message_type="document",
                 content=filename,
                 status="sent" if result else "failed",
-                metadata={"file_url": file_url},
+                extra_data={"file_url": file_url},
             )
             self.db.add(msg)
             await self.db.flush()

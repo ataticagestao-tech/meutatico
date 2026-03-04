@@ -40,7 +40,7 @@ class WhatsAppMessage(Base):
     message_type = Column(String(20), nullable=False, default="text")  # text, image, document, audio, video
     content = Column(Text)
     status = Column(String(20), default="sent")  # sent, delivered, read, failed
-    metadata = Column(JSON, default={})
+    extra_data = Column("metadata", JSON, default={})
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
