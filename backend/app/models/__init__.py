@@ -17,6 +17,7 @@ from app.models.tenant.monthly_routine import MonthlyRoutine
 from app.models.tenant.document_template import DocumentTemplate, GeneratedDocument
 from app.models.tenant.inbox import InboxMessage, EmailTemplate
 from app.models.tenant.sla_category import SlaCategory
+from app.models.tenant.whatsapp import WhatsAppInstance, WhatsAppMessage, WhatsAppChatbotRule
 
 __all__ = [
     "Plan", "PlanModule",
@@ -38,4 +39,5 @@ __all__ = [
     "DocumentTemplate", "GeneratedDocument",
     "InboxMessage", "EmailTemplate",
     "SlaCategory",
+    "WhatsAppInstance", "WhatsAppMessage", "WhatsAppChatbotRule",
 ]

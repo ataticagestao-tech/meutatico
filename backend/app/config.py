@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     BACKEND_BASE_URL: str = "http://localhost:8000"
     FRONTEND_BASE_URL: str = "http://localhost:3000"
 
+    # Evolution API (WhatsApp)
+    EVOLUTION_API_URL: str = ""
+    EVOLUTION_API_KEY: str = ""
+    EVOLUTION_INSTANCE_NAME: str = "tatica-gestap"
+    WHATSAPP_WEBHOOK_SECRET: str = ""
+
     # Instagram Graph API (Facebook Graph API v21.0)
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
