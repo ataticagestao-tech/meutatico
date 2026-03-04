@@ -479,7 +479,7 @@ function ConexaoTab() {
             Escaneie o QR Code com seu WhatsApp
           </h4>
           <div className="inline-block p-4 bg-white rounded-xl">
-            <img src={`data:image/png;base64,${qrCode}`} alt="QR Code" className="w-64 h-64" />
+            <img src={qrCode.startsWith("data:") ? qrCode : `data:image/png;base64,${qrCode}`} alt="QR Code" className="w-64 h-64" />
           </div>
           <p className="text-xs text-foreground-tertiary mt-4">
             Abra o WhatsApp &gt; Dispositivos conectados &gt; Conectar dispositivo
