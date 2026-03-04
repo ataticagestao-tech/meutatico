@@ -448,27 +448,16 @@ function ConexaoTab() {
     try {
       const { data } = await api.get("/whatsapp/instance/status");
       setStatus(data);
+      // Clear QR code when connected
+      if (data.status === "open" || data.status === "connected") {
+        setQrCode(null);
+      }
+      return data;
     } catch {
       setStatus({ configured: false, status: "not_configured" });
+      return null;
     } finally {
       setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  async function handleCreateInstance() {
-    setActionLoading(true);
-    try {
-      await api.post("/whatsapp/instance/create");
-      await fetchQR();
-      await fetchStatus();
-    } catch {
-      alert("Erro ao criar instância");
-    } finally {
-      setActionLoading(false);
     }
   }
 
@@ -478,6 +467,45 @@ function ConexaoTab() {
       setQrCode(data.qr_code || null);
     } catch {
       setQrCode(null);
+    }
+  }
+
+  useEffect(() => {
+    fetchStatus().then((data) => {
+      // Auto-fetch QR if instance exists but not connected
+      if (data && data.configured && data.status !== "open" && data.status !== "connected" && data.status !== "not_configured") {
+        fetchQR();
+      }
+    });
+  }, []);
+
+  // Auto-poll status every 5s while QR code is shown (waiting for scan)
+  useEffect(() => {
+    if (!qrCode) return;
+    const interval = setInterval(async () => {
+      const data = await fetchStatus();
+      if (data?.status === "open" || data?.status === "connected") {
+        setQrCode(null);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [qrCode]);
+
+  async function handleCreateInstance() {
+    setActionLoading(true);
+    try {
+      const { data } = await api.post("/whatsapp/instance/create");
+      // The create response may include a QR code directly
+      if (data?.qrcode?.base64) {
+        setQrCode(data.qrcode.base64);
+      } else {
+        await fetchQR();
+      }
+      await fetchStatus();
+    } catch {
+      alert("Erro ao criar instância");
+    } finally {
+      setActionLoading(false);
     }
   }
 

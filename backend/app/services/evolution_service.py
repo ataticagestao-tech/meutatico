@@ -4,6 +4,7 @@ Handles instance management, message sending/receiving, and chatbot logic
 via the Evolution API (self-hosted WhatsApp gateway).
 """
 
+import asyncio
 import logging
 from uuid import UUID
 
@@ -147,19 +148,17 @@ class EvolutionService:
     # ── Messaging ───────────────────────────────────────
 
     async def send_text(self, phone: str, message: str) -> dict:
-        """Send a text message via WhatsApp."""
-        # Normalize phone: remove non-digits, ensure country code
+        """Send a text message via WhatsApp.
+
+        Saves message locally first (instant feedback), then fires
+        the Evolution API call in the background to avoid blocking
+        on the known sendText hang bug in v2.3.x.
+        """
         phone_clean = "".join(c for c in phone if c.isdigit())
         if not phone_clean.startswith("55"):
             phone_clean = f"55{phone_clean}"
 
-        body = {
-            "number": phone_clean,
-            "text": message,
-        }
-        result = await self._api_post(f"/message/sendText/{self.instance}", body)
-
-        # Save outbound message locally
+        # Save outbound message locally FIRST (instant feedback)
         if self.tenant_id:
             msg = WhatsAppMessage(
                 tenant_id=self.tenant_id,
@@ -168,12 +167,33 @@ class EvolutionService:
                 to_phone=phone_clean,
                 message_type="text",
                 content=message,
-                status="sent" if result else "failed",
+                status="sent",
             )
             self.db.add(msg)
             await self.db.flush()
 
-        return result or {"error": "Failed to send message"}
+        # Fire Evolution API call in background (don't block response)
+        asyncio.create_task(
+            self._send_via_api(f"/message/sendText/{self.instance}", {
+                "number": phone_clean,
+                "text": message,
+            })
+        )
+
+        return {"status": "sent", "phone": phone_clean}
+
+    async def _send_via_api(self, path: str, body: dict) -> None:
+        """Background task: send message via Evolution API with long timeout."""
+        if not self.is_configured:
+            return
+        url = f"{self.base_url}{path}"
+        try:
+            async with httpx.AsyncClient(timeout=90) as client:
+                resp = await client.post(url, headers=self._headers, json=body)
+                resp.raise_for_status()
+                logger.info("Evolution API %s success", path)
+        except Exception as e:
+            logger.warning("Evolution API background %s error: %s", path, e)
 
     async def send_document(self, phone: str, file_url: str, filename: str) -> dict:
         """Send a document/file via WhatsApp."""
@@ -181,13 +201,7 @@ class EvolutionService:
         if not phone_clean.startswith("55"):
             phone_clean = f"55{phone_clean}"
 
-        body = {
-            "number": phone_clean,
-            "media": file_url,
-            "fileName": filename,
-        }
-        result = await self._api_post(f"/message/sendMedia/{self.instance}", body)
-
+        # Save locally first
         if self.tenant_id:
             msg = WhatsAppMessage(
                 tenant_id=self.tenant_id,
@@ -196,13 +210,22 @@ class EvolutionService:
                 to_phone=phone_clean,
                 message_type="document",
                 content=filename,
-                status="sent" if result else "failed",
+                status="sent",
                 extra_data={"file_url": file_url},
             )
             self.db.add(msg)
             await self.db.flush()
 
-        return result or {"error": "Failed to send document"}
+        # Fire in background
+        asyncio.create_task(
+            self._send_via_api(f"/message/sendMedia/{self.instance}", {
+                "number": phone_clean,
+                "media": file_url,
+                "fileName": filename,
+            })
+        )
+
+        return {"status": "sent", "phone": phone_clean}
 
     # ── Webhook Processing ──────────────────────────────
 
