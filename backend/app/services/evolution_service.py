@@ -284,6 +284,113 @@ class EvolutionService:
                 await self.send_text(phone, rule.response_message)
                 break
 
+    # ── Chat / Message Fetching ────────────────────────
+
+    async def fetch_chats(self, search: str | None = None) -> list[dict]:
+        """Fetch chat list from Evolution API."""
+        result = await self._api_post(f"/chat/findChats/{self.instance}", {})
+        if not result or not isinstance(result, list):
+            return []
+
+        chats = []
+        for chat in result:
+            remote_jid = chat.get("id") or chat.get("remoteJid") or ""
+            # Skip group chats and status broadcasts
+            if "@g.us" in remote_jid or remote_jid == "status@broadcast":
+                continue
+
+            phone = remote_jid.split("@")[0] if "@" in remote_jid else remote_jid
+            name = chat.get("name") or chat.get("pushName") or phone
+
+            if search:
+                s = search.lower()
+                if s not in name.lower() and s not in phone:
+                    continue
+
+            # Extract last message preview
+            last_msg = chat.get("lastMessage", {}) or {}
+            last_msg_content = (
+                last_msg.get("message", {}).get("conversation")
+                or last_msg.get("message", {}).get("extendedTextMessage", {}).get("text")
+                or ""
+            )
+
+            chats.append({
+                "id": remote_jid,
+                "name": name,
+                "phone_number": phone,
+                "custom_name": None,
+                "avatar_url": chat.get("profilePictureUrl"),
+                "last_message": last_msg_content[:80] if last_msg_content else None,
+                "last_message_at": chat.get("updatedAt") or chat.get("lastMsgTimestamp"),
+                "unread_count": chat.get("unreadCount", 0),
+            })
+
+        # Sort by most recent activity
+        chats.sort(key=lambda c: c.get("last_message_at") or "", reverse=True)
+        return chats
+
+    async def fetch_messages(self, remote_jid: str, limit: int = 50) -> list[dict]:
+        """Fetch messages for a specific chat from Evolution API."""
+        body = {
+            "where": {
+                "key": {
+                    "remoteJid": remote_jid,
+                },
+            },
+            "limit": limit,
+        }
+        result = await self._api_post(f"/chat/findMessages/{self.instance}", body)
+        if not result or not isinstance(result, list):
+            return []
+
+        # Some versions wrap in {"messages": {"records": [...]}}
+        if isinstance(result, dict):
+            result = result.get("messages", {}).get("records", []) or result.get("records", [])
+
+        messages = []
+        for msg in result:
+            key = msg.get("key", {})
+            message_data = msg.get("message", {}) or {}
+
+            content = (
+                message_data.get("conversation")
+                or message_data.get("extendedTextMessage", {}).get("text")
+                or message_data.get("imageMessage", {}).get("caption")
+                or message_data.get("documentMessage", {}).get("fileName")
+                or ""
+            )
+
+            msg_type = "text"
+            if message_data.get("imageMessage"):
+                msg_type = "image"
+            elif message_data.get("documentMessage"):
+                msg_type = "document"
+            elif message_data.get("audioMessage"):
+                msg_type = "audio"
+            elif message_data.get("videoMessage"):
+                msg_type = "video"
+
+            timestamp = msg.get("messageTimestamp")
+            if isinstance(timestamp, (int, float)):
+                from datetime import datetime, timezone
+                timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+            elif isinstance(timestamp, str) and timestamp.isdigit():
+                from datetime import datetime, timezone
+                timestamp = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).isoformat()
+
+            messages.append({
+                "id": key.get("id", msg.get("id", "")),
+                "content": content,
+                "from_me": key.get("fromMe", False),
+                "message_type": msg_type,
+                "media_url": None,
+                "timestamp": timestamp or msg.get("createdAt") or "",
+                "status": msg.get("status", ""),
+            })
+
+        return messages
+
     # ── Chatbot Rules CRUD ──────────────────────────────
 
     async def list_chatbot_rules(self) -> list[dict]:

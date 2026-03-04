@@ -12,7 +12,6 @@ from app.schemas.whatsapp import (
     SendTextRequest,
 )
 from app.services.evolution_service import EvolutionService
-from app.services.whatsapp_service import WhatsAppService
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
 
@@ -21,59 +20,54 @@ def _get_evolution(db: AsyncSession, user: dict) -> EvolutionService:
     return EvolutionService(db=db, tenant_id=user.get("tenant_id"))
 
 
-# ── Supabase Read-Only (existing) ──────────────────────
+# ── Contacts & Messages (via Evolution API) ───────────
 
 @router.get("/status")
 async def whatsapp_status(
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_user)],
 ):
-    """Get WhatsApp connection status (Supabase read-only)."""
-    service = WhatsAppService()
-    return await service.get_status()
+    """Get WhatsApp connection status via Evolution API."""
+    svc = _get_evolution(db, current_user)
+    status = await svc.get_instance_status()
+    is_connected = status.get("status") in ("open", "connected")
+    return {
+        "configured": status.get("configured", False),
+        "connected": is_connected,
+        "phone_number": status.get("phone_number"),
+    }
 
 
 @router.get("/contacts")
 async def list_contacts(
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_user)],
     search: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
-    """List WhatsApp contacts."""
-    service = WhatsAppService()
-    return await service.list_contacts(search=search, limit=limit, offset=offset)
+    """List WhatsApp chats from Evolution API."""
+    svc = _get_evolution(db, current_user)
+    chats = await svc.fetch_chats(search=search)
+    total = len(chats)
+    chats = chats[offset : offset + limit]
+    return {"items": chats, "total": total}
 
 
-@router.get("/messages/{contact_id}")
+@router.get("/messages/{contact_id:path}")
 async def get_messages(
     contact_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_user)],
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
-    """Get message history for a contact."""
-    service = WhatsAppService()
-    return await service.get_messages(contact_id, limit=limit, offset=offset)
-
-
-@router.get("/messages")
-async def search_messages(
-    current_user: Annotated[dict, Depends(get_current_user)],
-    q: str = Query(..., min_length=2),
-    limit: int = Query(30, ge=1, le=100),
-):
-    """Search across all WhatsApp messages."""
-    service = WhatsAppService()
-    return await service.search_messages(query=q, limit=limit)
-
-
-@router.get("/groups")
-async def list_groups(
-    current_user: Annotated[dict, Depends(get_current_user)],
-):
-    """List WhatsApp groups."""
-    service = WhatsAppService()
-    return await service.list_groups()
+    """Get message history for a contact from Evolution API."""
+    svc = _get_evolution(db, current_user)
+    # contact_id can be a remoteJid (with @) or just a phone number
+    remote_jid = contact_id if "@" in contact_id else f"{contact_id}@s.whatsapp.net"
+    messages = await svc.fetch_messages(remote_jid, limit=limit)
+    return {"items": messages, "total": len(messages)}
 
 
 # ── Evolution API: Instance Management ──────────────────

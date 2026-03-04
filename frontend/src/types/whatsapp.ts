@@ -18,6 +18,8 @@ export interface WhatsAppContact {
   phone_number: string
   custom_name: string | null
   avatar_url: string | null
+  last_message?: string | null
+  unread_count?: number
 }
 
 export interface WhatsAppMessage {

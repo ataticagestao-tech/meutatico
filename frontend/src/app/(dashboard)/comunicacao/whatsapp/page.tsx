@@ -92,15 +92,24 @@ function ConversasTab() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
 
+  async function fetchContacts(searchTerm?: string) {
+    try {
+      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : "";
+      const { data } = await api.get(`/whatsapp/contacts${params}`);
+      setContacts(data.items || []);
+    } catch {
+      setContacts([]);
+    }
+  }
+
   useEffect(() => {
     async function init() {
       try {
-        const [statusRes, contactsRes] = await Promise.all([
+        const [statusRes] = await Promise.all([
           api.get("/whatsapp/status"),
-          api.get("/whatsapp/contacts"),
+          fetchContacts(),
         ]);
         setStatus(statusRes.data);
-        setContacts(contactsRes.data.items || []);
       } catch {
         setStatus({ configured: false, connected: false, phone_number: null });
       } finally {
@@ -113,36 +122,50 @@ function ConversasTab() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (search.length >= 2) {
-        api
-          .get(`/whatsapp/contacts?search=${encodeURIComponent(search)}`)
-          .then((r) => setContacts(r.data.items || []))
-          .catch(() => {});
+        fetchContacts(search);
+      } else if (search.length === 0) {
+        fetchContacts();
       }
     }, 400);
     return () => clearTimeout(timer);
   }, [search]);
 
-  async function selectContact(contact: WhatsAppContact) {
-    setSelectedContact(contact);
-    setLoadingMessages(true);
+  async function loadMessages(contactId: string) {
     try {
-      const { data } = await api.get(`/whatsapp/messages/${encodeURIComponent(contact.id)}`);
+      const { data } = await api.get(`/whatsapp/messages/${encodeURIComponent(contactId)}`);
       setMessages(data.items || []);
     } catch {
       setMessages([]);
-    } finally {
-      setLoadingMessages(false);
     }
   }
 
+  async function selectContact(contact: WhatsAppContact) {
+    setSelectedContact(contact);
+    setLoadingMessages(true);
+    await loadMessages(contact.id);
+    setLoadingMessages(false);
+  }
+
+  // Auto-refresh messages every 10 seconds
+  useEffect(() => {
+    if (!selectedContact) return;
+    const interval = setInterval(() => {
+      loadMessages(selectedContact.id);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [selectedContact]);
+
   async function handleSend() {
-    if (!newMessage.trim() || !selectedContact?.phone_number) return;
+    if (!newMessage.trim() || !selectedContact) return;
+    const phone = selectedContact.phone_number || selectedContact.id.split("@")[0];
+    if (!phone) return;
     setSending(true);
     try {
       await api.post("/whatsapp/send/text", {
-        phone: selectedContact.phone_number,
+        phone,
         message: newMessage.trim(),
       });
+      // Add message optimistically
       setMessages((prev) => [
         {
           id: Date.now().toString(),
@@ -156,6 +179,8 @@ function ConversasTab() {
         ...prev,
       ]);
       setNewMessage("");
+      // Refresh messages from server after a short delay
+      setTimeout(() => loadMessages(selectedContact.id), 2000);
     } catch {
       alert("Erro ao enviar mensagem");
     } finally {
@@ -233,11 +258,20 @@ function ConversasTab() {
                           <User size={16} className="text-green-500" />
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground-primary truncate">
-                          {c.custom_name || c.name || c.phone_number}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-foreground-primary truncate">
+                            {c.custom_name || c.name || c.phone_number}
+                          </p>
+                          {(c.unread_count ?? 0) > 0 && (
+                            <span className="ml-2 min-w-[18px] h-[18px] px-1 bg-green-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                              {c.unread_count}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-foreground-tertiary truncate">
+                          {c.last_message || c.phone_number}
                         </p>
-                        <p className="text-[10px] text-foreground-tertiary">{c.phone_number}</p>
                       </div>
                     </div>
                   </button>
