@@ -30,15 +30,15 @@ export function Header() {
     : { name: "Usuário" };
 
   return (
-    <header className="h-16 bg-background-primary border-b border-border flex items-center justify-between px-6 shrink-0">
+    <header className="h-14 bg-background-primary/80 backdrop-blur-md border-b border-border flex items-center justify-between px-5 shrink-0 sticky top-0 z-10">
       {/* Search */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
+      <div className="flex items-center gap-3 flex-1 max-w-sm">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="w-full pl-10 pr-4 py-2 bg-background-secondary border border-border rounded-lg
+            className="w-full pl-9 pr-4 py-1.5 bg-background-secondary border border-border rounded-lg
               text-sm text-foreground-primary placeholder:text-foreground-tertiary
               focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary
               transition-colors"
@@ -51,33 +51,33 @@ export function Header() {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-background-secondary text-foreground-secondary transition-colors"
+          className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors"
           title="Alternar tema"
         >
-          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
         </button>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-lg hover:bg-background-secondary text-foreground-secondary transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+        <button className="relative p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors">
+          <Bell size={18} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background-primary" />
         </button>
 
         {/* User menu */}
         <div className="flex items-center gap-3 ml-2 pl-4 border-l border-border">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-foreground-primary">{user.name}</p>
-            <p className="text-xs text-foreground-tertiary">{user.email}</p>
+            <p className="text-[13px] font-medium text-foreground-primary leading-tight">{user.name}</p>
+            <p className="text-[11px] text-foreground-tertiary">{user.email}</p>
           </div>
-          <div className="w-9 h-9 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-xs ring-2 ring-brand-primary/20">
             {user.name?.charAt(0)?.toUpperCase() || "U"}
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 rounded-lg hover:bg-background-secondary text-foreground-secondary hover:text-red-500 transition-colors"
+            className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary hover:text-red-500 transition-colors"
             title="Sair"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
           </button>
         </div>
       </div>

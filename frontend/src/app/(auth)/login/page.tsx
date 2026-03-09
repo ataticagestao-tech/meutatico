@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, BarChart3, Shield, Zap } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-brand-secondary items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 items-center justify-center p-12 relative overflow-hidden">
         <div className="max-w-md text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -64,20 +64,38 @@ export default function LoginPage() {
             </svg>
             <h1 className="text-4xl font-bold text-white">tática</h1>
           </div>
-          <p className="text-xs uppercase tracking-[2px] text-white/35 font-medium mb-10">
+          <p className="text-xs uppercase tracking-[2px] text-white/40 font-medium mb-12">
             gestão estratégica
           </p>
-          <div className="w-64 h-64 mx-auto bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center">
-            <svg width="120" height="120" viewBox="0 0 48 48" fill="none">
-              <rect x="3" y="3" width="19" height="19" rx="4" fill="white" />
-              <rect x="26" y="3" width="19" height="19" rx="4" fill="white" opacity=".2" />
-              <rect x="3" y="26" width="19" height="19" rx="4" fill="white" opacity=".2" />
-              <rect x="26" y="26" width="19" height="19" rx="4" fill="white" />
-            </svg>
+          <div className="space-y-4 text-left">
+            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <BarChart3 size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Dashboard Inteligente</h3>
+                <p className="text-xs text-white/60 mt-0.5">Visão completa do seu negócio em tempo real</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <Shield size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Segurança Total</h3>
+                <p className="text-xs text-white/60 mt-0.5">Dados protegidos com criptografia de ponta</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <Zap size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Automação de Processos</h3>
+                <p className="text-xs text-white/60 mt-0.5">Reduza trabalho manual com fluxos inteligentes</p>
+              </div>
+            </div>
           </div>
-          <p className="mt-8 text-sm text-white/40">
-            Centralize processos, solicitações, tarefas e documentos em uma única plataforma.
-          </p>
         </div>
       </div>
 
@@ -87,10 +105,10 @@ export default function LoginPage() {
           <div className="lg:hidden mb-8 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
               <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                <rect x="3" y="3" width="19" height="19" rx="4" fill="#171717" />
-                <rect x="26" y="3" width="19" height="19" rx="4" fill="#171717" opacity=".2" />
-                <rect x="3" y="26" width="19" height="19" rx="4" fill="#171717" opacity=".2" />
-                <rect x="26" y="26" width="19" height="19" rx="4" fill="#171717" />
+                <rect x="3" y="3" width="19" height="19" rx="4" fill="#2563EB" />
+                <rect x="26" y="3" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
+                <rect x="3" y="26" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
+                <rect x="26" y="26" width="19" height="19" rx="4" fill="#2563EB" />
               </svg>
               <h1 className="text-3xl font-bold text-foreground-primary">tática</h1>
             </div>
@@ -168,7 +186,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-primary text-white
-                rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand-primary/20
+                rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/20
                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
