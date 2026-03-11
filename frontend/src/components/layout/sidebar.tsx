@@ -306,7 +306,6 @@ export function Sidebar() {
                                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                   isChildActive ? "bg-brand-primary" : "bg-foreground-tertiary/40"
                                 }`}
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 bg-brand-primary`}
                               />
                               <span className="flex-1">{child.label}</span>
                               {child.badge && (
