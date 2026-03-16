@@ -160,6 +160,14 @@ class UserService:
         user = await self.get_user(user_id)
         update_data = data.model_dump(exclude_unset=True, exclude={"role_ids"})
 
+        # Trata senha separadamente
+        if "password" in update_data:
+            raw_password = update_data.pop("password")
+            password_errors = validate_password_strength(raw_password)
+            if password_errors:
+                raise BadRequestException("Senha inválida", errors=password_errors)
+            user.password_hash = hash_password(raw_password)
+
         # Verifica email duplicado se estiver alterando
         if "email" in update_data and update_data["email"] != user.email:
             existing = await self.db.execute(

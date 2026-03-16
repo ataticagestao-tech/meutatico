@@ -42,6 +42,10 @@ class User(Base):
         foreign_keys="[UserRole.user_id]",
     )
 
+    @property
+    def roles(self):
+        return [ur.role for ur in self.user_roles if ur.role]
+
 
 class UserRole(Base):
     __tablename__ = "user_roles"
