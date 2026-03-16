@@ -132,7 +132,9 @@ export default function SettingsUsersPage() {
       setShowModal(false);
       fetchUsers();
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || "Erro ao salvar usuario.";
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || "Erro ao salvar usuario.";
+      const errors: string[] = err?.response?.data?.errors || [];
+      const msg = errors.length > 0 ? `${detail}\n${errors.join("\n")}` : detail;
       setToast({ message: msg, type: "error" });
     } finally {
       setSaving(false);
@@ -183,8 +185,10 @@ export default function SettingsUsersPage() {
     >
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-          {toast.message}
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium max-w-sm ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+          {toast.message.split("\n").map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
         </div>
       )}
 
