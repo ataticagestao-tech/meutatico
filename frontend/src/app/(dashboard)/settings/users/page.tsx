@@ -132,7 +132,7 @@ export default function SettingsUsersPage() {
       setShowModal(false);
       fetchUsers();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Erro ao salvar usuario.";
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || "Erro ao salvar usuario.";
       setToast({ message: msg, type: "error" });
     } finally {
       setSaving(false);
