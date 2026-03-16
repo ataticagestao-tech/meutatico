@@ -3,45 +3,45 @@
 @tailwind utilities;
 
 :root {
-  /* ═══ TATICA Brand v5 — Light Theme ═══ */
+  /* ═══ TATICA Brand v6 — Moderno Claro ═══ */
 
-  /* Background — Bege quente para área de conteúdo */
+  /* Background — Cool grays, clean white */
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #faf8f5;
-  --color-bg-tertiary: #f3efe8;
-  --color-bg-sidebar: #171717;
+  --color-bg-secondary: #F8FAFC;
+  --color-bg-tertiary: #F1F5F9;
+  --color-bg-sidebar: #FFFFFF;
 
-  /* Texto — Escala de preto neutro */
-  --color-text-primary: #171717;
-  --color-text-secondary: #525252;
-  --color-text-tertiary: #a3a3a3;
+  /* Texto — Cool slate scale */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
   --color-text-inverse: #FFFFFF;
 
   /* Bordas */
-  --color-border: #e5e5e5;
-  --color-border-focus: #3b6cf6;
+  --color-border: #E2E8F0;
+  --color-border-focus: #2563EB;
 
-  /* Brand — Azul tático */
-  --color-brand-primary: #3b6cf6;
-  --color-brand-secondary: #171717;
-  --color-brand-accent: #2348eb;
+  /* Brand — Azul Escuro */
+  --color-brand-primary: #2563EB;
+  --color-brand-secondary: #1E40AF;
+  --color-brand-accent: #3B82F6;
 
   /* Feedback */
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-error: #dc2626;
-  --color-info: #3b6cf6;
+  --color-info: #2563EB;
 
   /* Status */
   --color-status-active: #16a34a;
-  --color-status-inactive: #737373;
+  --color-status-inactive: #64748B;
   --color-status-onboarding: #8B5CF6;
   --color-status-suspended: #d97706;
   --color-status-churned: #dc2626;
 
   /* Priority */
-  --color-priority-low: #737373;
-  --color-priority-medium: #3b6cf6;
+  --color-priority-low: #64748B;
+  --color-priority-medium: #2563EB;
   --color-priority-high: #d97706;
   --color-priority-urgent: #dc2626;
 
@@ -52,23 +52,23 @@
   --radius-xl: 16px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
 }
 
 [data-theme="dark"] {
-  --color-bg-primary: #171717;
-  --color-bg-secondary: #262626;
-  --color-bg-tertiary: #404040;
-  --color-bg-sidebar: #0a0a0a;
+  --color-bg-primary: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-bg-sidebar: #0F172A;
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a3a3a3;
-  --color-text-tertiary: #737373;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-tertiary: #64748B;
 
-  --color-border: #404040;
-  --color-border-focus: #3b6cf6;
+  --color-border: #334155;
+  --color-border-focus: #3B82F6;
 }
 
 @layer base {
@@ -77,12 +77,12 @@
   }
 
   body {
-    @apply bg-background-primary text-foreground-primary font-sans antialiased;
+    @apply bg-background-secondary text-foreground-primary font-sans antialiased;
   }
 }
 
 @layer utilities {
-  /* ═══ Scrollbar Base — para áreas claras ═══ */
+  /* ═══ Scrollbar — clean thin style ═══ */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
@@ -90,7 +90,7 @@
 
   .scrollbar-thin:hover,
   .scrollbar-thin:active {
-    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -109,14 +109,14 @@
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background: rgba(156, 163, 175, 0.3);
+    background: rgba(148, 163, 184, 0.3);
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(156, 163, 175, 0.5);
+    background: rgba(148, 163, 184, 0.5);
   }
 
-  /* ═══ Scrollbar Dark — para sidebar e áreas escuras ═══ */
+  /* ═══ Scrollbar Dark — for dark mode ═══ */
   .scrollbar-dark {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
@@ -149,7 +149,7 @@
     background: rgba(255, 255, 255, 0.3);
   }
 
-  /* ═══ Esconder scrollbar completamente ═══ */
+  /* ═══ Hide scrollbar ═══ */
   .scrollbar-none {
     scrollbar-width: none;
   }

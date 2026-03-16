@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Tatica Gestap"
 
     # Supabase Financeiro (ataticagestao.com) — READ-ONLY, SERVER-SIDE ONLY
-    SUPABASE_FINANCEIRO_URL: str = ""
-    SUPABASE_FINANCEIRO_SERVICE_KEY: str = ""
+    SUPABASE_FINANCEIRO_URL: str = "https://onobornmnzemgsduscug.supabase.co"
+    SUPABASE_FINANCEIRO_SERVICE_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ub2Jvcm5tbnplbWdzZHVzY3VnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODI3MDE0MCwiZXhwIjoyMDgzODQ2MTQwfQ.ndDsY81N88GYSXmRc-23aMdJ79h7nc43oC7bqWTXHJs"
     FINANCIAL_BASE_URL: str = "https://ataticagestao.com/auth"
 
     # Microsoft Graph / OneDrive
