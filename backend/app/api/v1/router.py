@@ -24,6 +24,8 @@ from app.api.v1.google_calendar import router as google_calendar_router
 from app.api.v1.instagram import router as instagram_router
 from app.api.v1.audit_logs import router as audit_logs_router
 from app.api.v1.plano_contas import router as plano_contas_router
+from app.api.v1.estoque import router as estoque_router
+from app.api.v1.multiempresa import router as multiempresa_router
 
 api_router = APIRouter()
 
@@ -51,3 +53,5 @@ api_router.include_router(google_calendar_router)
 api_router.include_router(instagram_router)
 api_router.include_router(audit_logs_router)
 api_router.include_router(plano_contas_router)
+api_router.include_router(estoque_router)
+api_router.include_router(multiempresa_router)

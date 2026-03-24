@@ -16,9 +16,11 @@ import {
   Link2,
   Lock,
   MessageSquare,
+  Package,
   Settings,
   Shield,
   Building2,
+  GitMerge,
   Tag,
   Users,
 } from "lucide-react";
@@ -90,6 +92,26 @@ const menuItems: MenuItem[] = [
       { label: "Gerar Termo", href: "/documents/termos" },
       { label: "Vencimentos", href: "/documents/vencimentos" },
       { label: "Assinatura Digital", href: "/documents/assinatura" },
+    ],
+  },
+  {
+    label: "Estoque",
+    icon: Package,
+    href: "/estoque",
+    children: [
+      { label: "Produtos & Insumos", href: "/estoque/produtos" },
+      { label: "Ordens de Compra", href: "/estoque/ordens-compra" },
+      { label: "Inventário", href: "/estoque/inventario" },
+    ],
+  },
+  {
+    label: "Multi-empresa",
+    icon: GitMerge,
+    href: "/multiempresa",
+    children: [
+      { label: "Consolidado", href: "/multiempresa" },
+      { label: "Transferências", href: "/multiempresa/transferencias" },
+      { label: "Relatórios", href: "/multiempresa/relatorios" },
     ],
   },
   {
