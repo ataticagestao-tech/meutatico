@@ -1,12 +1,16 @@
 import math
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import BadRequestException, NotFoundException
-from app.models.tenant.document import Document, DocumentFolder
-from app.schemas.document import DocumentFolderCreate, DocumentFolderUpdate, DocumentUpdate
+from app.models.tenant.document import Document, DocumentFolder, DocumentValidity
+from app.schemas.document import (
+    DocumentFolderCreate, DocumentFolderUpdate, DocumentUpdate,
+    DocumentValidityCreate, DocumentValidityUpdate,
+)
 
 
 class DocumentService:
@@ -216,7 +220,7 @@ class DocumentService:
             "total_pages": math.ceil(total / per_page) if per_page > 0 else 0,
         }
 
-    async def upload_document(
+    async def create_document(
         self,
         name: str,
         original_filename: str,
@@ -278,8 +282,160 @@ class DocumentService:
         await self.db.flush()
         return document
 
-    async def delete_document(self, document_id: UUID) -> None:
+    async def soft_delete_document(self, document_id: UUID) -> None:
         """Soft delete: marca o documento como 'deleted'."""
         document = await self.get_document(document_id)
         document.status = "deleted"
+        await self.db.flush()
+
+    async def delete_folder(self, folder_id: UUID) -> None:
+        """Deleta pasta se estiver vazia (sem docs e sem subpastas)."""
+        result = await self.db.execute(
+            select(DocumentFolder).where(DocumentFolder.id == folder_id)
+        )
+        folder = result.scalar_one_or_none()
+        if not folder:
+            raise NotFoundException("Pasta não encontrada")
+
+        # Verifica se tem documentos
+        doc_count = await self.db.execute(
+            select(func.count()).select_from(Document).where(
+                Document.folder_id == folder_id, Document.status != "deleted"
+            )
+        )
+        if doc_count.scalar() > 0:
+            raise BadRequestException("Pasta contém documentos. Mova ou exclua os documentos antes.")
+
+        # Verifica subpastas
+        sub_count = await self.db.execute(
+            select(func.count()).select_from(DocumentFolder).where(
+                DocumentFolder.parent_folder_id == folder_id
+            )
+        )
+        if sub_count.scalar() > 0:
+            raise BadRequestException("Pasta contém subpastas. Exclua as subpastas antes.")
+
+        await self.db.delete(folder)
+        await self.db.flush()
+
+    # ── Document Validity ────────────────────────────────────────────────
+
+    async def list_validities(
+        self,
+        status_filter: str | None = None,
+        alert_level: str | None = None,
+    ) -> list[dict]:
+        """Lista documentos com controle de validade, com dias restantes calculados."""
+        query = (
+            select(DocumentValidity, Document)
+            .join(Document, DocumentValidity.document_id == Document.id)
+            .where(Document.status != "deleted")
+        )
+
+        if status_filter and status_filter != "all":
+            query = query.where(DocumentValidity.status == status_filter)
+
+        query = query.order_by(DocumentValidity.expiry_date.asc())
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        today = date.today()
+        items = []
+        for validity, doc in rows:
+            days_remaining = (validity.expiry_date - today).days if validity.expiry_date else None
+
+            if days_remaining is not None:
+                if days_remaining < 0:
+                    level = "vencido"
+                elif days_remaining <= 30:
+                    level = "critico"
+                elif days_remaining <= 60:
+                    level = "atencao"
+                else:
+                    level = "ok"
+            else:
+                level = "ok"
+
+            # Filter by alert_level if specified
+            if alert_level and alert_level != "all" and level != alert_level:
+                continue
+
+            items.append({
+                "id": validity.id,
+                "document_id": validity.document_id,
+                "issue_date": validity.issue_date,
+                "expiry_date": validity.expiry_date,
+                "issuing_body": validity.issuing_body,
+                "responsible": validity.responsible,
+                "observations": validity.observations,
+                "alert_30d": validity.alert_30d,
+                "alert_60d": validity.alert_60d,
+                "alert_90d": validity.alert_90d,
+                "status": validity.status,
+                "renewed_at": validity.renewed_at,
+                "renewed_document_id": validity.renewed_document_id,
+                "created_at": validity.created_at,
+                "updated_at": validity.updated_at,
+                "document_name": doc.name,
+                "document_category": doc.category,
+                "days_remaining": days_remaining,
+                "alert_level": level,
+            })
+
+        return items
+
+    async def create_validity(self, data: DocumentValidityCreate) -> DocumentValidity:
+        # Verify document exists
+        await self.get_document(data.document_id)
+
+        # Check for existing validity
+        existing = await self.db.execute(
+            select(DocumentValidity).where(
+                DocumentValidity.document_id == data.document_id
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise BadRequestException("Este documento já possui controle de validade")
+
+        validity = DocumentValidity(
+            document_id=data.document_id,
+            issue_date=data.issue_date,
+            expiry_date=data.expiry_date,
+            issuing_body=data.issuing_body,
+            responsible=data.responsible,
+            observations=data.observations,
+            alert_30d=data.alert_30d,
+            alert_60d=data.alert_60d,
+            alert_90d=data.alert_90d,
+        )
+        self.db.add(validity)
+        await self.db.flush()
+        return validity
+
+    async def update_validity(
+        self, validity_id: UUID, data: DocumentValidityUpdate
+    ) -> DocumentValidity:
+        result = await self.db.execute(
+            select(DocumentValidity).where(DocumentValidity.id == validity_id)
+        )
+        validity = result.scalar_one_or_none()
+        if not validity:
+            raise NotFoundException("Registro de validade não encontrado")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(validity, key, value)
+
+        await self.db.flush()
+        return validity
+
+    async def delete_validity(self, validity_id: UUID) -> None:
+        result = await self.db.execute(
+            select(DocumentValidity).where(DocumentValidity.id == validity_id)
+        )
+        validity = result.scalar_one_or_none()
+        if not validity:
+            raise NotFoundException("Registro de validade não encontrado")
+
+        await self.db.delete(validity)
         await self.db.flush()

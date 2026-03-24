@@ -8,7 +8,7 @@ from app.models.tenant.client import Client, ClientContact, ClientPartner
 from app.models.tenant.ticket import Ticket, TicketMessage
 from app.models.tenant.task import Task, TaskTemplate
 from app.models.tenant.knowledge_base import KnowledgeBaseCategory, KnowledgeBaseArticle
-from app.models.tenant.document import Document, DocumentFolder
+from app.models.tenant.document import Document, DocumentFolder, DocumentValidity
 from app.models.tenant.notification import Notification
 from app.models.tenant.audit_log import AuditLog
 from app.models.tenant.calendar_event import CalendarEvent
@@ -30,7 +30,7 @@ __all__ = [
     "Ticket", "TicketMessage",
     "Task", "TaskTemplate",
     "KnowledgeBaseCategory", "KnowledgeBaseArticle",
-    "Document", "DocumentFolder",
+    "Document", "DocumentFolder", "DocumentValidity",
     "Notification",
     "AuditLog",
     "CalendarEvent",

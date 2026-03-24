@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -63,3 +63,54 @@ class DocumentListResponse(BaseModel):
     page: int
     per_page: int
     total_pages: int
+
+
+# ── Document Validity ────────────────────────────────
+
+class DocumentValidityCreate(BaseModel):
+    document_id: UUID
+    issue_date: date | None = None
+    expiry_date: date
+    issuing_body: str | None = None
+    responsible: str | None = None
+    observations: str | None = None
+    alert_30d: bool = True
+    alert_60d: bool = False
+    alert_90d: bool = False
+
+
+class DocumentValidityUpdate(BaseModel):
+    expiry_date: date | None = None
+    issuing_body: str | None = None
+    responsible: str | None = None
+    observations: str | None = None
+    alert_30d: bool | None = None
+    alert_60d: bool | None = None
+    alert_90d: bool | None = None
+    status: str | None = Field(None, pattern=r"^(valido|vencendo|vencido|renovado)$")
+
+
+class DocumentValidityResponse(BaseModel):
+    id: UUID
+    document_id: UUID
+    issue_date: date | None
+    expiry_date: date
+    issuing_body: str | None
+    responsible: str | None
+    observations: str | None
+    alert_30d: bool
+    alert_60d: bool
+    alert_90d: bool
+    status: str
+    renewed_at: date | None
+    renewed_document_id: UUID | None
+    created_at: datetime
+    updated_at: datetime
+
+    # Joined fields (from document)
+    document_name: str | None = None
+    document_category: str | None = None
+    days_remaining: int | None = None
+    alert_level: str | None = None  # ok | atencao | critico | vencido
+
+    model_config = {"from_attributes": True}
