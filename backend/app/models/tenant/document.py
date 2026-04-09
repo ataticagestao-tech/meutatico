@@ -82,7 +82,7 @@ class Document(Base):
     )
 
     folder = relationship("DocumentFolder", back_populates="documents")
-    validity = relationship("DocumentValidity", back_populates="document", uselist=False)
+    validity = relationship("DocumentValidity", back_populates="document", uselist=False, foreign_keys="[DocumentValidity.document_id]")
 
 
 class DocumentValidity(Base):
