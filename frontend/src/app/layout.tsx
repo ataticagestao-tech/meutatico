@@ -1,6 +1,7 @@
 "use client";
 
 import "@/styles/globals.css";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 
 const themeScript = `
 (function() {
@@ -33,7 +34,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-screen bg-background-primary text-foreground-primary antialiased">
-        {children}
+        <ConfirmDialogProvider>
+          {children}
+        </ConfirmDialogProvider>
       </body>
     </html>
   );

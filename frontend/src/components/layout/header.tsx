@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, Moon, Search, Sun, User } from "lucide-react";
+import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown";
 
 export function Header() {
   const router = useRouter();
@@ -64,22 +71,43 @@ export function Header() {
         </button>
 
         {/* User menu */}
-        <div className="flex items-center gap-3 ml-2 pl-4 border-l border-border">
-          <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-medium text-foreground-primary leading-tight">{user.name}</p>
-            <p className="text-[11px] text-foreground-tertiary">{user.email}</p>
-          </div>
-          <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-xs ring-2 ring-brand-primary/20">
-            {user.name?.charAt(0)?.toUpperCase() || "U"}
-          </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary hover:text-red-500 transition-colors"
-            title="Sair"
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-3 ml-2 pl-4 border-l border-border outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 rounded-lg"
+              aria-label="Abrir menu do usuário"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-[13px] font-medium text-foreground-primary leading-tight">{user.name}</p>
+                <p className="text-[11px] text-foreground-tertiary">{user.email}</p>
+              </div>
+              <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-xs ring-2 ring-brand-primary/20">
+                {user.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-2 py-1.5 sm:hidden">
+              <p className="text-sm font-medium text-foreground-primary leading-tight truncate">{user.name}</p>
+              <p className="text-xs text-foreground-tertiary truncate">{user.email}</p>
+            </div>
+            <DropdownMenuSeparator className="sm:hidden" />
+            <DropdownMenuItem onSelect={() => router.push("/settings/company")}>
+              <User size={14} className="mr-2" /> Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push("/settings")}>
+              <Settings size={14} className="mr-2" /> Configurações
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={handleLogout}
+              className="text-red-600 focus:text-red-700 focus:bg-red-50"
+            >
+              <LogOut size={14} className="mr-2" /> Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

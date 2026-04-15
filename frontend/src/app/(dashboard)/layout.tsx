@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 
@@ -11,13 +11,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Auth via cookie httpOnly — checamos sessionStorage (dados não-sensíveis do login)
     const user = sessionStorage.getItem("user");
     if (!user) {
-      router.replace("/login");
+      const target = pathname && pathname !== "/login" ? `/login?redirect=${encodeURIComponent(pathname)}` : "/login";
+      router.replace(target);
       return;
     }
     setMounted(true);

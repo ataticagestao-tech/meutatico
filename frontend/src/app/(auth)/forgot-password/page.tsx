@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
               type="submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-primary text-white
-                rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                rounded-lg font-medium hover:bg-brand-secondary disabled:opacity-50 transition-colors"
             >
               {loading ? (
                 <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />

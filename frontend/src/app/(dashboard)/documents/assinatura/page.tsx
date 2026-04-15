@@ -13,8 +13,8 @@ export default function AssinaturaDigitalPage() {
       ]}
     >
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center mb-6">
-          <FileSignature size={40} className="text-blue-500/60" />
+        <div className="w-20 h-20 rounded-2xl bg-brand-primary/10 flex items-center justify-center mb-6">
+          <FileSignature size={40} className="text-brand-primary/60" />
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold mb-4">

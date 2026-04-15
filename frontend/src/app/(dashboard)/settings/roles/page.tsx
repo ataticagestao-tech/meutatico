@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import type { Role, Permission } from "@/types/user";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface PermissionGroup {
   module: string;
@@ -26,6 +27,7 @@ export default function SettingsRolesPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const confirm = useConfirm();
 
   // Modal
   const [showModal, setShowModal] = useState(false);
@@ -174,7 +176,13 @@ export default function SettingsRolesPage() {
   }
 
   async function handleDelete(roleId: string) {
-    if (!window.confirm("Tem certeza que deseja excluir este cargo?")) return;
+    const ok = await confirm({
+      title: "Excluir este cargo?",
+      description: "Usuários vinculados podem perder permissões. Esta ação não pode ser desfeita.",
+      confirmLabel: "Sim, excluir",
+      variant: "destructive",
+    });
+    if (!ok) return;
     try {
       await api.delete(`/roles/${roleId}`);
       fetchRoles();

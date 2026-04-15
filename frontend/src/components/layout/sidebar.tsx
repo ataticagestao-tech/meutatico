@@ -207,10 +207,10 @@ export function Sidebar() {
       <div className="flex items-center justify-between h-14 px-4 border-b border-border">
         <div className="flex items-center gap-2.5 min-w-0">
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none" className="shrink-0">
-            <rect x="3" y="3" width="19" height="19" rx="4" fill="#2563EB" />
-            <rect x="26" y="3" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
-            <rect x="3" y="26" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
-            <rect x="26" y="26" width="19" height="19" rx="4" fill="#2563EB" />
+            <rect x="3" y="3" width="19" height="19" rx="4" fill="#3b5bdb" />
+            <rect x="26" y="3" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
+            <rect x="3" y="26" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
+            <rect x="26" y="26" width="19" height="19" rx="4" fill="#3b5bdb" />
           </svg>
           {!collapsed && (
             <div className="min-w-0">

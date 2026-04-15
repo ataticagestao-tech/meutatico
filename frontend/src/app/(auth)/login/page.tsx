@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LogIn, BarChart3, Shield, Zap } from "lucide-react";
+
+// Aceita apenas paths relativos (previne open-redirect para domínios externos)
+function safeRedirect(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  return raw;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,8 +46,11 @@ export default function LoginPage() {
       sessionStorage.setItem("user", JSON.stringify(data.user));
       sessionStorage.setItem("tenant", JSON.stringify(data.tenant));
 
-      // Verifica se é super admin
-      if (data.user.roles?.includes("super_admin")) {
+      // Respeita ?redirect= se presente e seguro; senão vai para home por role
+      const requested = safeRedirect(searchParams.get("redirect"));
+      if (requested) {
+        router.push(requested);
+      } else if (data.user.roles?.includes("super_admin")) {
         router.push("/super-admin");
       } else {
         router.push("/dashboard");
@@ -53,7 +65,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-brand-primary items-center justify-center p-12 relative overflow-hidden">
         <div className="max-w-md text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -105,10 +117,10 @@ export default function LoginPage() {
           <div className="lg:hidden mb-8 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
               <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                <rect x="3" y="3" width="19" height="19" rx="4" fill="#2563EB" />
-                <rect x="26" y="3" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
-                <rect x="3" y="26" width="19" height="19" rx="4" fill="#2563EB" opacity=".2" />
-                <rect x="26" y="26" width="19" height="19" rx="4" fill="#2563EB" />
+                <rect x="3" y="3" width="19" height="19" rx="4" fill="#3b5bdb" />
+                <rect x="26" y="3" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
+                <rect x="3" y="26" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
+                <rect x="26" y="26" width="19" height="19" rx="4" fill="#3b5bdb" />
               </svg>
               <h1 className="text-3xl font-bold text-foreground-primary">tática</h1>
             </div>

@@ -25,7 +25,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     // Auth via cookie httpOnly — checamos sessionStorage (dados não-sensíveis do login)
     const user = sessionStorage.getItem("user");
     if (!user) {
-      router.replace("/login");
+      const target = pathname && pathname !== "/login" ? `/login?redirect=${encodeURIComponent(pathname)}` : "/login";
+      router.replace(target);
       return;
     }
     setMounted(true);

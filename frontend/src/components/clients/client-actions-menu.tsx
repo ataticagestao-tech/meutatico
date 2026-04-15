@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface ClientActionsMenuProps {
   clientId: string;
@@ -21,6 +22,7 @@ export function ClientActionsMenu({ clientId, clientName, onDelete }: ClientActi
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const confirm = useConfirm();
 
   const updatePosition = useCallback(() => {
     if (!buttonRef.current) return;
@@ -95,11 +97,14 @@ export function ClientActionsMenu({ clientId, clientName, onDelete }: ClientActi
     router.push(`/clients/${clientId}`);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsOpen(false);
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir o cliente "${clientName}"?\n\nEsta acao nao pode ser desfeita.`
-    );
+    const confirmed = await confirm({
+      title: `Excluir o cliente "${clientName}"?`,
+      description: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Sim, excluir",
+      variant: "destructive",
+    });
     if (confirmed) {
       onDelete(clientId);
     }

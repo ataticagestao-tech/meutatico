@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  /* ═══ TATICA Brand v6 — Moderno Claro ═══ */
+  /* ═══ TATICA Brand v7 — Swiss Luxury Minimal ═══ */
 
-  /* Background — Cool grays, clean white */
+  /* Background — warm cream + clean white */
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F8FAFC;
+  --color-bg-secondary: #f7f5f0;
   --color-bg-tertiary: #F1F5F9;
   --color-bg-sidebar: #FFFFFF;
 
@@ -19,31 +19,31 @@
 
   /* Bordas */
   --color-border: #E2E8F0;
-  --color-border-focus: #2563EB;
+  --color-border-focus: #3b5bdb;
 
-  /* Brand — Azul Escuro */
-  --color-brand-primary: #2563EB;
-  --color-brand-secondary: #1E40AF;
-  --color-brand-accent: #3B82F6;
+  /* Brand — Navy + Gold (Swiss Luxury Minimal) */
+  --color-brand-primary: #3b5bdb;
+  --color-brand-secondary: #2e4ac9;
+  --color-brand-accent: #c9963a;
 
   /* Feedback */
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
-  --color-info: #2563EB;
+  --color-success: #2e7d32;
+  --color-warning: #f57f17;
+  --color-error: #c62828;
+  --color-info: #3b5bdb;
 
   /* Status */
-  --color-status-active: #16a34a;
+  --color-status-active: #2e7d32;
   --color-status-inactive: #64748B;
   --color-status-onboarding: #8B5CF6;
-  --color-status-suspended: #d97706;
-  --color-status-churned: #dc2626;
+  --color-status-suspended: #f57f17;
+  --color-status-churned: #c62828;
 
   /* Priority */
   --color-priority-low: #64748B;
-  --color-priority-medium: #2563EB;
-  --color-priority-high: #d97706;
-  --color-priority-urgent: #dc2626;
+  --color-priority-medium: #3b5bdb;
+  --color-priority-high: #f57f17;
+  --color-priority-urgent: #c62828;
 
   /* Radius */
   --radius-sm: 6px;
@@ -58,17 +58,17 @@
 }
 
 [data-theme="dark"] {
-  --color-bg-primary: #0F172A;
-  --color-bg-secondary: #1E293B;
-  --color-bg-tertiary: #334155;
-  --color-bg-sidebar: #0F172A;
+  --color-bg-primary: #0c1220;
+  --color-bg-secondary: #141e30;
+  --color-bg-tertiary: #1e2a42;
+  --color-bg-sidebar: #0c1220;
 
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #94A3B8;
   --color-text-tertiary: #64748B;
 
-  --color-border: #334155;
-  --color-border-focus: #3B82F6;
+  --color-border: #2a3652;
+  --color-border-focus: #5570e8;
 }
 
 @layer base {

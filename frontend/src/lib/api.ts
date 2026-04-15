@@ -66,9 +66,11 @@ api.interceptors.response.use(
         processQueue(refreshError)
         removeAccessToken()
 
-        // Redirect to login when refresh fails
+        // Redirect to login when refresh fails — preserva rota atual
         if (typeof window !== 'undefined') {
-          window.location.href = '/login'
+          const current = window.location.pathname + window.location.search
+          const target = current && current !== '/login' ? `/login?redirect=${encodeURIComponent(current)}` : '/login'
+          window.location.href = target
         }
 
         return Promise.reject(refreshError)
