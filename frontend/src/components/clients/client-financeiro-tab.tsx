@@ -44,7 +44,17 @@ interface FinancialDashboard {
     pendentes: number;
     percentual: number;
   };
-  resultado: { receitas: number; despesas: number; liquido: number };
+  resultado: {
+    receitas: number;
+    deducoes: number;
+    receita_liquida: number;
+    custos: number;
+    lucro_bruto: number;
+    despesas_operacionais: number;
+    resultado_operacional: number;
+    distribuicao_lucro: number;
+    liquido: number;
+  };
   connected: boolean;
 }
 
@@ -450,7 +460,7 @@ export function ClientFinanceiroTab({ clientId }: ClientFinanceiroTabProps) {
                   </div>
                 </div>
 
-                {/* Resultado */}
+                {/* Resultado — DRE Resumido */}
                 <div className="bg-background-primary border border-border rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`p-1.5 rounded-lg ${
@@ -464,22 +474,36 @@ export function ClientFinanceiroTab({ clientId }: ClientFinanceiroTabProps) {
                         <TrendingDown size={16} className="text-red-500" />
                       )}
                     </div>
-                    <span className="text-xs font-medium text-foreground-secondary">Resultado do Mês</span>
+                    <span className="text-xs font-medium text-foreground-secondary">Resultado do Mes</span>
                   </div>
                   <p className={`text-2xl font-bold ${
                     dashboard.resultado.liquido >= 0 ? "text-green-600" : "text-red-500"
                   }`}>
                     {formatCurrency(dashboard.resultado.liquido)}
                   </p>
-                  <div className="flex justify-between text-[11px] mt-1">
-                    <span>
-                      <span className="text-foreground-tertiary">Receitas: </span>
+                  <div className="space-y-0.5 text-[11px] mt-1">
+                    <div className="flex justify-between">
+                      <span className="text-foreground-tertiary">Receitas</span>
                       <span className="text-green-600 font-medium">{formatCurrency(dashboard.resultado.receitas)}</span>
-                    </span>
-                    <span>
-                      <span className="text-foreground-tertiary">Despesas: </span>
-                      <span className="text-red-500 font-medium">{formatCurrency(dashboard.resultado.despesas)}</span>
-                    </span>
+                    </div>
+                    {dashboard.resultado.custos > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Custos</span>
+                        <span className="text-red-500 font-medium">{formatCurrency(dashboard.resultado.custos)}</span>
+                      </div>
+                    )}
+                    {dashboard.resultado.despesas_operacionais > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Despesas Op.</span>
+                        <span className="text-red-500 font-medium">{formatCurrency(dashboard.resultado.despesas_operacionais)}</span>
+                      </div>
+                    )}
+                    {dashboard.resultado.distribuicao_lucro > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Antec. Lucro</span>
+                        <span className="text-amber-600 font-medium">{formatCurrency(dashboard.resultado.distribuicao_lucro)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

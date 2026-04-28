@@ -63,9 +63,10 @@
   --color-bg-tertiary: #1e2a42;
   --color-bg-sidebar: #0c1220;
 
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary: #64748B;
+  /* Texto creme quente — confortável, sem o branco puro estourado */
+  --color-text-primary: #EDE6D3;
+  --color-text-secondary: #A89F8A;
+  --color-text-tertiary: #6B6557;
 
   --color-border: #2a3652;
   --color-border-focus: #5570e8;

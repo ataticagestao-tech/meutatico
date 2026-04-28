@@ -42,7 +42,17 @@ interface FinancialDashboard {
     pendentes: number;
     percentual: number;
   };
-  resultado: { receitas: number; despesas: number; liquido: number };
+  resultado: {
+    receitas: number;
+    deducoes: number;
+    receita_liquida: number;
+    custos: number;
+    lucro_bruto: number;
+    despesas_operacionais: number;
+    resultado_operacional: number;
+    distribuicao_lucro: number;
+    liquido: number;
+  };
   connected: boolean;
 }
 
@@ -487,12 +497,30 @@ export default function RelatorioPage() {
                         {formatCurrency(dashboard.resultado.receitas)}
                       </td>
                     </tr>
-                    <tr className="border-b border-border/50">
-                      <td className="px-4 py-2.5 text-foreground-secondary">Despesas</td>
-                      <td className="px-4 py-2.5 text-right font-medium text-red-500">
-                        {formatCurrency(dashboard.resultado.despesas)}
-                      </td>
-                    </tr>
+                    {dashboard.resultado.custos > 0 && (
+                      <tr className="border-b border-border/50">
+                        <td className="px-4 py-2.5 text-foreground-secondary">(-) Custos (CSP)</td>
+                        <td className="px-4 py-2.5 text-right font-medium text-red-500">
+                          {formatCurrency(dashboard.resultado.custos)}
+                        </td>
+                      </tr>
+                    )}
+                    {dashboard.resultado.despesas_operacionais > 0 && (
+                      <tr className="border-b border-border/50">
+                        <td className="px-4 py-2.5 text-foreground-secondary">(-) Despesas Operacionais</td>
+                        <td className="px-4 py-2.5 text-right font-medium text-red-500">
+                          {formatCurrency(dashboard.resultado.despesas_operacionais)}
+                        </td>
+                      </tr>
+                    )}
+                    {dashboard.resultado.distribuicao_lucro > 0 && (
+                      <tr className="border-b border-border/50">
+                        <td className="px-4 py-2.5 text-foreground-secondary">(-) Antecipacao de Lucro</td>
+                        <td className="px-4 py-2.5 text-right font-medium text-amber-600">
+                          {formatCurrency(dashboard.resultado.distribuicao_lucro)}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="bg-background-tertiary/50">
                       <td className="px-4 py-3 font-semibold text-foreground-primary">
                         Resultado Líquido

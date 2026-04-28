@@ -34,7 +34,17 @@ interface FinancialDashboard {
     pendentes: number;
     percentual: number;
   };
-  resultado: { receitas: number; despesas: number; liquido: number };
+  resultado: {
+    receitas: number;
+    deducoes: number;
+    receita_liquida: number;
+    custos: number;
+    lucro_bruto: number;
+    despesas_operacionais: number;
+    resultado_operacional: number;
+    distribuicao_lucro: number;
+    liquido: number;
+  };
   connected: boolean;
 }
 
@@ -426,7 +436,7 @@ export default function FinanceiroPage() {
                   )}
                 </div>
 
-                {/* Resultado */}
+                {/* Resultado — DRE Resumido */}
                 <div className="bg-background-primary border border-border rounded-xl p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <div className={`p-2 rounded-lg ${
@@ -441,7 +451,7 @@ export default function FinanceiroPage() {
                       )}
                     </div>
                     <span className="text-sm font-medium text-foreground-secondary">
-                      Resultado do Mês
+                      Resultado do Mes
                     </span>
                   </div>
                   <p className={`text-3xl font-bold ${
@@ -449,18 +459,55 @@ export default function FinanceiroPage() {
                   }`}>
                     {formatCurrency(dashboard.resultado.liquido)}
                   </p>
-                  <div className="mt-3 flex justify-between text-xs">
-                    <div>
-                      <span className="text-foreground-tertiary">Receitas: </span>
+                  <div className="mt-3 space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-foreground-tertiary">Receitas</span>
                       <span className="text-green-600 font-medium">
                         {formatCurrency(dashboard.resultado.receitas)}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-foreground-tertiary">Despesas: </span>
-                      <span className="text-red-500 font-medium">
-                        {formatCurrency(dashboard.resultado.despesas)}
-                      </span>
+                    {dashboard.resultado.deducoes > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Deducoes</span>
+                        <span className="text-red-400 font-medium">
+                          {formatCurrency(dashboard.resultado.deducoes)}
+                        </span>
+                      </div>
+                    )}
+                    {dashboard.resultado.custos > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Custos (CSP)</span>
+                        <span className="text-red-500 font-medium">
+                          {formatCurrency(dashboard.resultado.custos)}
+                        </span>
+                      </div>
+                    )}
+                    {dashboard.resultado.despesas_operacionais > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-foreground-tertiary">(-) Despesas Operacionais</span>
+                        <span className="text-red-500 font-medium">
+                          {formatCurrency(dashboard.resultado.despesas_operacionais)}
+                        </span>
+                      </div>
+                    )}
+                    {dashboard.resultado.distribuicao_lucro > 0 && (
+                      <>
+                        <div className="border-t border-border my-1" />
+                        <div className="flex justify-between">
+                          <span className="text-foreground-tertiary">(-) Antecipacao de Lucro</span>
+                          <span className="text-amber-600 font-medium">
+                            {formatCurrency(dashboard.resultado.distribuicao_lucro)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div className="border-t border-border pt-1.5">
+                      <div className="flex justify-between font-semibold">
+                        <span className="text-foreground-secondary">Resultado Liquido</span>
+                        <span className={dashboard.resultado.liquido >= 0 ? "text-green-600" : "text-red-500"}>
+                          {formatCurrency(dashboard.resultado.liquido)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

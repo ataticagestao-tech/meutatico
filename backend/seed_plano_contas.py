@@ -72,6 +72,8 @@ def _account_type(codigo: str) -> str:
         return "expense"
     if codigo.startswith("5"):
         return "equity"
+    if codigo.startswith("6"):
+        return "asset"  # Movimentações patrimoniais
     return "expense"
 
 def _account_nature(natureza: str) -> str:
@@ -163,6 +165,12 @@ PLANO_DE_CONTAS_RAW = [
     {"codigo": "5.1",    "nome": "Distribuição de Lucros",                    "tipo": "Grupo",     "natureza": "Crédito/Débito",  "grupo_dre": "Resultado",           "recorrencia": None,          "nivel": "subgrupo", "codigo_pai": "5"},
     {"codigo": "5.1.01", "nome": "Antecipação de Lucros / Retirada do Sócio", "tipo": "Analítica", "natureza": "Débito",          "grupo_dre": "Resultado",           "recorrencia": "Mensal",      "nivel": "analitica","codigo_pai": "5.1"},
     {"codigo": "5.1.02", "nome": "Reserva de Lucros",                         "tipo": "Analítica", "natureza": "Crédito",         "grupo_dre": "Resultado",           "recorrencia": "Esporádico",  "nivel": "analitica","codigo_pai": "5.1"},
+    # GRUPO 6 — MOVIMENTAÇÕES PATRIMONIAIS (não entra no DRE)
+    {"codigo": "6",      "nome": "MOVIMENTAÇÕES PATRIMONIAIS",               "tipo": "Grupo",     "natureza": "Crédito/Débito",  "grupo_dre": "Não DRE",             "recorrencia": None,          "nivel": "grupo",    "codigo_pai": None},
+    {"codigo": "6.1",    "nome": "Transferências entre Contas",              "tipo": "Grupo",     "natureza": "Crédito/Débito",  "grupo_dre": "Não DRE",             "recorrencia": None,          "nivel": "subgrupo", "codigo_pai": "6"},
+    {"codigo": "6.1.01", "nome": "Transferência entre Contas Bancárias",     "tipo": "Analítica", "natureza": "Crédito/Débito",  "grupo_dre": "Não DRE",             "recorrencia": "Variável",    "nivel": "analitica","codigo_pai": "6.1"},
+    {"codigo": "6.1.02", "nome": "Aplicação / Resgate de Investimentos",     "tipo": "Analítica", "natureza": "Crédito/Débito",  "grupo_dre": "Não DRE",             "recorrencia": "Esporádico",  "nivel": "analitica","codigo_pai": "6.1"},
+    {"codigo": "6.1.03", "nome": "Empréstimo entre Empresas / Sócios",       "tipo": "Analítica", "natureza": "Crédito/Débito",  "grupo_dre": "Não DRE",             "recorrencia": "Esporádico",  "nivel": "analitica","codigo_pai": "6.1"},
 ]
 
 
@@ -200,6 +208,8 @@ REGRAS_CONCILIACAO = [
     {"codigo_conta": "4.4.03", "palavras_chave": ["PARCELA EMPRESTIMO", "AMORTIZACAO", "EMPRESTIMO"],            "confianca": "Alta",  "recorrencia": "Mensal",      "acao": "auto-conciliar"},
     {"codigo_conta": "4.4.05", "palavras_chave": ["MERCADO PAGO", "TAXA MAQUININHA", "MDR", "STONE"],            "confianca": "Alta",  "recorrencia": "Mensal",      "acao": "auto-conciliar"},
     {"codigo_conta": "5.1.01", "palavras_chave": ["ANTECIPACAO LUCRO", "RETIRADA SOCIO", "PRO-LABORE"],          "confianca": "Alta",  "recorrencia": "Mensal",      "acao": "sugerir"},
+    {"codigo_conta": "6.1.01", "palavras_chave": ["TRANSFERENCIA", "TRANSF", "TED", "TEF", "PIX TRANSF", "MESMA TITULARIDADE", "ENTRE CONTAS"],  "confianca": "Alta",  "recorrencia": "Variável",  "acao": "sugerir"},
+    {"codigo_conta": "6.1.02", "palavras_chave": ["APLICACAO", "RESGATE", "CDB", "INVESTIMENTO", "POUPANCA", "RENDA FIXA"],                     "confianca": "Média", "recorrencia": "Esporádico","acao": "sugerir"},
 ]
 
 
@@ -278,13 +288,19 @@ async def seed(empresa_id: str):
                     "parent_id": code_to_id[raw["codigo_pai"]],
                 })
 
-        for upd in updates:
-            await client.patch(
-                f"{base}/chart_of_accounts",
-                headers={**HEADERS, "Prefer": "return=minimal"},
-                params=[("id", f"eq.{upd['id']}")],
-                json={"parent_id": upd["parent_id"]},
-            )
+        # Paralelo em lotes de 10 para não sobrecarregar
+        import asyncio as _aio
+        for batch_start in range(0, len(updates), 10):
+            batch = updates[batch_start:batch_start + 10]
+            await _aio.gather(*(
+                client.patch(
+                    f"{base}/chart_of_accounts",
+                    headers={**HEADERS, "Prefer": "return=minimal"},
+                    params=[("id", f"eq.{upd['id']}")],
+                    json={"parent_id": upd["parent_id"]},
+                )
+                for upd in batch
+            ))
         print(f"  OK {len(updates)} parent_id resolvidos")
 
         # ── 3. Limpar regras existentes ──────────────────
@@ -336,7 +352,49 @@ async def seed(empresa_id: str):
         print(f"   Regras: {len(rules_payload)}")
 
 
+async def get_all_companies() -> list[dict]:
+    """Busca todas as empresas (companies) do Supabase."""
+    base = f"{SUPABASE_URL}/rest/v1"
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(
+            f"{base}/companies",
+            headers=HEADERS,
+            params=[("select", "id,nome_fantasia,razao_social"), ("is_active", "eq.true"), ("order", "nome_fantasia.asc")],
+        )
+        if resp.status_code >= 400:
+            print(f"ERRO ao buscar empresas: {resp.status_code} — {resp.text[:200]}")
+            return []
+        return resp.json()
+
+
+async def seed_all():
+    """Aplica o plano de contas para TODAS as empresas."""
+    companies = await get_all_companies()
+    if not companies:
+        print("Nenhuma empresa encontrada!")
+        return
+
+    print(f"Encontradas {len(companies)} empresas:\n")
+    for c in companies:
+        print(f"  - {c.get('nome_fantasia') or c.get('razao_social') or 'Sem nome'} ({c['id']})")
+
+    print(f"\n{'='*60}")
+    for i, c in enumerate(companies, 1):
+        nome = c.get("name", "Sem nome")
+        print(f"\n[{i}/{len(companies)}] Processando: {nome}")
+        print(f"{'='*60}")
+        await seed(c["id"])
+
+    print(f"\n{'='*60}")
+    print(f"CONCLUÍDO: {len(companies)} empresas processadas!")
+
+
 if __name__ == "__main__":
-    empresa_id = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_EMPRESA_ID
-    print(f"Empresa ID: {empresa_id}")
-    asyncio.run(seed(empresa_id))
+    if len(sys.argv) > 1 and sys.argv[1] == "--all":
+        print("Modo: TODAS as empresas\n")
+        asyncio.run(seed_all())
+    else:
+        empresa_id = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_EMPRESA_ID
+        print(f"Empresa ID: {empresa_id}")
+        print("(Use --all para aplicar em todas as empresas)\n")
+        asyncio.run(seed(empresa_id))

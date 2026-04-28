@@ -18,6 +18,7 @@ import {
   Users as UsersIcon,
   FolderOpen,
   DollarSign,
+  Wallet,
   History,
 } from "lucide-react";
 import { CLIENT_STATUSES } from "@/lib/constants";
@@ -28,11 +29,12 @@ import { ClientTicketsTab } from "@/components/clients/client-tickets-tab";
 import { ClientPartnersTab } from "@/components/clients/client-partners-tab";
 import { ClientDocumentsTab } from "@/components/clients/client-documents-tab";
 import { ClientFinanceiroTab } from "@/components/clients/client-financeiro-tab";
+import { ClientFluxoCaixaTab } from "@/components/clients/client-fluxo-caixa-tab";
 import { ClientHistoricoTab } from "@/components/clients/client-historico-tab";
 import type { Client, ClientUpdateRequest, ClientContact } from "@/types/client";
 import type { UserType } from "@/types/user";
 
-type TabKey = "main" | "address" | "management" | "contacts" | "tasks" | "tickets" | "partners" | "documents" | "financeiro" | "historico";
+type TabKey = "main" | "address" | "management" | "contacts" | "tasks" | "tickets" | "partners" | "documents" | "financeiro" | "fluxo-caixa" | "historico";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "main", label: "Dados Principais", icon: Building2 },
@@ -44,6 +46,7 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "partners", label: "Sócios", icon: UsersIcon },
   { key: "documents", label: "Documentos", icon: FolderOpen },
   { key: "financeiro", label: "Financeiro", icon: DollarSign },
+  { key: "fluxo-caixa", label: "Fluxo de Caixa", icon: Wallet },
   { key: "historico", label: "Histórico", icon: History },
 ];
 
@@ -702,7 +705,10 @@ export default function ClientDetailPage() {
             {/* Tab 9: Financeiro */}
             {activeTab === "financeiro" && <ClientFinanceiroTab clientId={clientId} />}
 
-            {/* Tab 10: Histórico */}
+            {/* Tab 10: Fluxo de Caixa */}
+            {activeTab === "fluxo-caixa" && <ClientFluxoCaixaTab clientId={clientId} />}
+
+            {/* Tab 11: Histórico */}
             {activeTab === "historico" && <ClientHistoricoTab clientId={clientId} />}
           </div>
         </div>

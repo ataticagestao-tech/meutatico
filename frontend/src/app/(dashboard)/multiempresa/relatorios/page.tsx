@@ -9,8 +9,16 @@ import {
   Trash2,
   X,
   BarChart3,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import api from "@/lib/api";
+
+interface Empresa {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+}
 
 interface Relatorio {
   id: string;
@@ -38,6 +46,9 @@ export default function RelatoriosPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [selectedEmpresas, setSelectedEmpresas] = useState<string[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const now = new Date();
   const mesAtual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -45,7 +56,6 @@ export default function RelatoriosPage() {
   const [form, setForm] = useState({
     nome: "",
     tipo: "dre_comparativo",
-    empresas_ids: "",
     competencia_inicio: mesAtual,
     competencia_fim: mesAtual,
     indicador: "",
@@ -63,20 +73,31 @@ export default function RelatoriosPage() {
     }
   }, []);
 
-  useEffect(() => { fetchRelatorios(); }, [fetchRelatorios]);
+  const fetchEmpresas = useCallback(async () => {
+    try {
+      const { data } = await api.get("/financeiro/companies");
+      setEmpresas(Array.isArray(data) ? data : []);
+    } catch {
+      setEmpresas([]);
+    }
+  }, []);
+
+  useEffect(() => { fetchRelatorios(); fetchEmpresas(); }, [fetchRelatorios, fetchEmpresas]);
+
+  const toggleEmpresa = (id: string) => {
+    setSelectedEmpresas((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
+    );
+  };
 
   const handleSave = async () => {
-    if (!form.nome.trim()) return;
+    if (!form.nome.trim() || selectedEmpresas.length === 0) return;
     setSaving(true);
     try {
-      const ids = form.empresas_ids
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
       await api.post("/multiempresa/relatorios/", {
         nome: form.nome,
         tipo: form.tipo,
-        empresas_ids: ids,
+        empresas_ids: selectedEmpresas,
         competencia_inicio: form.competencia_inicio,
         competencia_fim: form.competencia_fim,
         indicador: form.indicador || null,
@@ -85,11 +106,11 @@ export default function RelatoriosPage() {
       setForm({
         nome: "",
         tipo: "dre_comparativo",
-        empresas_ids: "",
         competencia_inicio: mesAtual,
         competencia_fim: mesAtual,
         indicador: "",
       });
+      setSelectedEmpresas([]);
       fetchRelatorios();
     } catch { /* ignore */ } finally {
       setSaving(false);
@@ -105,7 +126,7 @@ export default function RelatoriosPage() {
   };
 
   return (
-    <PageWrapper title="Relatórios Comparativos" subtitle="Compare indicadores entre empresas do grupo">
+    <PageWrapper title="Relatórios Comparativos">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -207,14 +228,64 @@ export default function RelatoriosPage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-zinc-700">IDs das Empresas (separados por vírgula)</label>
-                <textarea
-                  className="w-full mt-1 px-3 py-2 border border-zinc-300 rounded-lg text-sm"
-                  rows={2}
-                  value={form.empresas_ids}
-                  onChange={(e) => setForm((f) => ({ ...f, empresas_ids: e.target.value }))}
-                  placeholder="uuid1, uuid2, uuid3"
-                />
+                <label className="text-sm font-medium text-zinc-700">Empresas do Grupo</label>
+                <div className="relative mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="w-full flex items-center justify-between px-3 py-2 border border-zinc-300 rounded-lg text-sm bg-white hover:border-zinc-400 transition-colors"
+                  >
+                    <span className={selectedEmpresas.length === 0 ? "text-zinc-400" : "text-zinc-900"}>
+                      {selectedEmpresas.length === 0
+                        ? "Selecione as empresas..."
+                        : `${selectedEmpresas.length} empresa(s) selecionada(s)`}
+                    </span>
+                    <ChevronDown size={16} className={`text-zinc-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-zinc-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {empresas.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-zinc-400">Nenhuma empresa encontrada</div>
+                      ) : (
+                        empresas.map((emp) => (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            onClick={() => toggleEmpresa(emp.id)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-blue-50 transition-colors"
+                          >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                              selectedEmpresas.includes(emp.id)
+                                ? "bg-blue-600 border-blue-600"
+                                : "border-zinc-300"
+                            }`}>
+                              {selectedEmpresas.includes(emp.id) && <Check size={12} className="text-white" />}
+                            </div>
+                            <span className="truncate">{(emp.nome_fantasia || emp.razao_social)}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {selectedEmpresas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {selectedEmpresas.map((id) => {
+                      const emp = empresas.find((e) => e.id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs"
+                        >
+                          {emp ? (emp.nome_fantasia || emp.razao_social) : id.slice(0, 8)}
+                          <button type="button" onClick={() => toggleEmpresa(id)} className="hover:text-blue-900">
+                            <X size={12} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -255,7 +326,7 @@ export default function RelatoriosPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !form.nome.trim()}
+                disabled={saving || !form.nome.trim() || selectedEmpresas.length === 0}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : "Gerar"}
