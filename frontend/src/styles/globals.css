@@ -5,11 +5,11 @@
 :root {
   /* ═══ TATICA Brand v7 — Alto Contraste (WCAG AAA) ═══ */
 
-  /* Background — branco limpo + cinzas neutros */
-  --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F5F5F5;
-  --color-bg-tertiary: #EBEBEB;
-  --color-bg-sidebar: #FFFFFF;
+  /* Background — creme quente em vez de branco/cinza */
+  --color-bg-primary: #FAF6EE;
+  --color-bg-secondary: #F2EDE0;
+  --color-bg-tertiary: #E8E2D2;
+  --color-bg-sidebar: #FAF6EE;
 
   /* Texto — preto puro + cinzas escuros (contraste AAA) */
   --color-text-primary: #000000;
