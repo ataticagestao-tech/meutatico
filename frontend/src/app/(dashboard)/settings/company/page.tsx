@@ -11,8 +11,11 @@ import {
   Globe,
   Clock,
   Calendar,
+  HelpCircle,
 } from "lucide-react";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import api from "@/lib/api";
+import { normalizeUrl } from "@/lib/utils";
 
 interface CompanySettings {
   id: string;
@@ -116,12 +119,16 @@ export default function SettingsCompanyPage() {
 
     setSaving(true);
     try {
+      const normalizedLogo = logoUrl ? normalizeUrl(logoUrl) : null;
+      if (normalizedLogo && normalizedLogo !== logoUrl) {
+        setLogoUrl(normalizedLogo);
+      }
       await api.put("/settings/company", {
         name,
         document: document || null,
         email,
         phone: phone || null,
-        logo_url: logoUrl || null,
+        logo_url: normalizedLogo,
         settings: {
           timezone,
           date_format: dateFormat,
@@ -244,7 +251,11 @@ export default function SettingsCompanyPage() {
                     type="text"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="URL da logo (ex: https://...)"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v) setLogoUrl(normalizeUrl(v));
+                    }}
+                    placeholder="URL da logo (ex: tatica.com/logo.png)"
                     className={inputClass}
                   />
                   <p className="text-xs text-foreground-tertiary mt-1">
@@ -268,7 +279,12 @@ export default function SettingsCompanyPage() {
 
             {/* CNPJ */}
             <div>
-              <label className={labelClass}>CNPJ</label>
+              <label className={`${labelClass} flex items-center gap-1.5`}>
+                CNPJ
+                <QuickTooltip label="14 digitos do CNPJ. Formato e validado automaticamente.">
+                  <HelpCircle size={13} className="text-foreground-tertiary cursor-help" />
+                </QuickTooltip>
+              </label>
               <input
                 type="text"
                 value={document}
@@ -280,16 +296,18 @@ export default function SettingsCompanyPage() {
 
             {/* Slug (readonly) */}
             <div>
-              <label className={labelClass}>Identificador (slug)</label>
+              <label className={`${labelClass} flex items-center gap-1.5`}>
+                Identificador (slug)
+                <QuickTooltip label="Identificador unico do tenant na URL. Nao pode ser alterado apos a criacao.">
+                  <HelpCircle size={13} className="text-foreground-tertiary cursor-help" />
+                </QuickTooltip>
+              </label>
               <input
                 type="text"
                 value={slug}
                 readOnly
                 className={`${inputClass} bg-background-secondary cursor-not-allowed opacity-70`}
               />
-              <p className="text-xs text-foreground-tertiary mt-1">
-                Identificador unico do tenant. Nao pode ser alterado.
-              </p>
             </div>
           </div>
         </div>

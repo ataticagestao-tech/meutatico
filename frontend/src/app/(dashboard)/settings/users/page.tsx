@@ -6,7 +6,6 @@ import {
   Search,
   Plus,
   X,
-  Loader2,
   Users,
   MoreVertical,
   UserX,
@@ -14,8 +13,11 @@ import {
   Edit3,
 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { formatDateTime, getInitials } from "@/lib/utils";
+import { formatDateTime, getInitials, passwordChecklist } from "@/lib/utils";
 import api from "@/lib/api";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonTable } from "@/components/ui/skeleton";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import type { UserType, UserCreateRequest, UserUpdateRequest } from "@/types/user";
 import type { Role } from "@/types/user";
 
@@ -30,7 +32,11 @@ export default function SettingsUsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+    undo?: () => void | Promise<void>;
+  } | null>(null);
 
   // Form
   const [formName, setFormName] = useState("");
@@ -68,7 +74,7 @@ export default function SettingsUsersPage() {
 
   useEffect(() => {
     if (toast) {
-      const t = setTimeout(() => setToast(null), 4000);
+      const t = setTimeout(() => setToast(null), toast.undo ? 7000 : 4000);
       return () => clearTimeout(t);
     }
   }, [toast]);
@@ -142,12 +148,22 @@ export default function SettingsUsersPage() {
   }
 
   async function toggleUserActive(user: UserType) {
+    const previousActive = user.is_active;
     try {
-      await api.put(`/users/${user.id}`, { is_active: !user.is_active });
+      await api.put(`/users/${user.id}`, { is_active: !previousActive });
       fetchUsers();
       setToast({
-        message: user.is_active ? "Usuario desativado." : "Usuario ativado.",
+        message: previousActive ? "Usuario desativado." : "Usuario ativado.",
         type: "success",
+        undo: async () => {
+          try {
+            await api.put(`/users/${user.id}`, { is_active: previousActive });
+            fetchUsers();
+            setToast({ message: "Acao desfeita.", type: "success" });
+          } catch {
+            setToast({ message: "Nao foi possivel desfazer.", type: "error" });
+          }
+        },
       });
     } catch {
       setToast({ message: "Erro ao atualizar usuario.", type: "error" });
@@ -185,10 +201,25 @@ export default function SettingsUsersPage() {
     >
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium max-w-sm ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-          {toast.message.split("\n").map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium max-w-sm ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+          <div className="flex-1">
+            {toast.message.split("\n").map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+          {toast.undo && (
+            <button
+              type="button"
+              onClick={async () => {
+                const undoFn = toast.undo;
+                setToast(null);
+                if (undoFn) await undoFn();
+              }}
+              className="shrink-0 px-2.5 py-1 -my-1 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-semibold uppercase tracking-wider"
+            >
+              Desfazer
+            </button>
+          )}
         </div>
       )}
 
@@ -223,18 +254,33 @@ export default function SettingsUsersPage() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <div className="flex items-center justify-center gap-3 text-foreground-tertiary">
-                      <div className="animate-spin h-5 w-5 border-2 border-brand-primary border-t-transparent rounded-full" />
-                      <span className="text-sm">Carregando...</span>
-                    </div>
+                  <td colSpan={6} className="p-0">
+                    <SkeletonTable rows={5} columns={6} />
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <Users size={40} className="mx-auto mb-2 text-foreground-tertiary opacity-50" />
-                    <p className="text-foreground-tertiary text-sm">Nenhum usuario encontrado</p>
+                  <td colSpan={6} className="p-0">
+                    <EmptyState
+                      icon={Users}
+                      title={debouncedSearch ? "Nenhum usuario encontrado" : "Nenhum usuario cadastrado"}
+                      description={
+                        debouncedSearch
+                          ? "Tente ajustar sua busca ou limpar os filtros."
+                          : "Comece criando o primeiro usuario do sistema."
+                      }
+                      action={
+                        !debouncedSearch && (
+                          <button
+                            onClick={openCreate}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg text-sm font-medium hover:opacity-90"
+                          >
+                            <Plus size={16} />
+                            Novo Usuario
+                          </button>
+                        )
+                      }
+                    />
                   </td>
                 </tr>
               ) : (
@@ -276,12 +322,14 @@ export default function SettingsUsersPage() {
                       {user.last_login ? formatDateTime(user.last_login) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right relative">
-                      <button
-                        onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
-                        className="p-1.5 text-foreground-tertiary hover:text-foreground-primary rounded-lg hover:bg-background-tertiary"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
+                      <QuickTooltip label="Mais acoes" side="left">
+                        <button
+                          onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
+                          className="p-1.5 text-foreground-tertiary hover:text-foreground-primary rounded-lg hover:bg-background-tertiary"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                      </QuickTooltip>
                       {activeDropdown === user.id && (
                         <div className="absolute right-4 top-12 w-44 bg-background-primary border border-border rounded-lg shadow-lg py-1 z-10">
                           <button
@@ -340,6 +388,23 @@ export default function SettingsUsersPage() {
                   Senha {editingUser ? "(deixe em branco para manter)" : "*"}
                 </label>
                 <input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="********" className={inputClass} />
+                {(!editingUser || formPassword) && (() => {
+                  const c = passwordChecklist(formPassword);
+                  const Item = ({ ok, label }: { ok: boolean; label: string }) => (
+                    <li className={`flex items-center gap-1.5 ${ok ? "text-green-600" : "text-foreground-tertiary"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-green-500" : "bg-foreground-tertiary/40"}`} />
+                      {label}
+                    </li>
+                  );
+                  return (
+                    <ul className="mt-2 space-y-0.5 text-xs">
+                      <Item ok={c.minLength} label="Mínimo 8 caracteres" />
+                      <Item ok={c.upper} label="Letra maiúscula" />
+                      <Item ok={c.number} label="Número" />
+                      <Item ok={c.special} label="Caractere especial" />
+                    </ul>
+                  );
+                })()}
               </div>
               <div>
                 <label className={labelClass}>Telefone</label>

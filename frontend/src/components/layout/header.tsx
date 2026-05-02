@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react";
 import {
@@ -10,14 +10,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown";
+import { QuickTooltip } from "@/components/ui/tooltip";
+import { CommandPalette } from "@/components/layout/command-palette";
 
 export function Header() {
   const router = useRouter();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(
     typeof window !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark"
       ? "dark"
       : "light"
   );
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform));
+  }, []);
+
+  // Global Cmd/Ctrl+K shortcut
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      const isCombo = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      if (isCombo) {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -38,37 +59,40 @@ export function Header() {
 
   return (
     <header className="h-14 bg-background-primary/80 backdrop-blur-md border-b border-border flex items-center justify-between px-5 shrink-0 sticky top-0 z-10">
-      {/* Search */}
+      {/* Search trigger (opens command palette) */}
       <div className="flex items-center gap-3 flex-1 max-w-sm">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="w-full pl-9 pr-4 py-1.5 bg-background-secondary border border-border rounded-lg
-              text-sm text-foreground-primary placeholder:text-foreground-tertiary
-              focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary
-              transition-colors"
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="group relative flex-1 flex items-center gap-2 pl-3 pr-2 py-1.5 bg-background-secondary border border-border rounded-lg text-sm text-foreground-tertiary hover:border-brand-primary/40 hover:bg-background-primary transition-colors text-left"
+        >
+          <Search size={16} className="shrink-0" />
+          <span className="flex-1 truncate">Buscar paginas, acoes...</span>
+          <kbd className="shrink-0 hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-background-tertiary border border-border font-mono text-[10px] text-foreground-tertiary">
+            {isMac ? "⌘K" : "Ctrl K"}
+          </kbd>
+        </button>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-2">
         {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors"
-          title="Alternar tema"
-        >
-          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
+        <QuickTooltip label={theme === "light" ? "Modo escuro" : "Modo claro"}>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors"
+          >
+            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </QuickTooltip>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background-primary" />
-        </button>
+        <QuickTooltip label="Notificacoes">
+          <button className="relative p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors">
+            <Bell size={18} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background-primary" />
+          </button>
+        </QuickTooltip>
 
         {/* User menu */}
         <DropdownMenu>
@@ -109,6 +133,8 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   );
 }

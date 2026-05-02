@@ -165,7 +165,7 @@ export default function InstagramPage() {
           {/* Header with refresh */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center">
                 {profile?.profile_picture_url ? (
                   <img
                     src={profile.profile_picture_url}
@@ -223,7 +223,7 @@ export default function InstagramPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="bg-background-primary border border-border rounded-xl p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-pink-500 flex items-center justify-center overflow-hidden">
                   {profile?.profile_picture_url ? (
                     <img
                       src={profile.profile_picture_url}
@@ -327,7 +327,7 @@ export default function InstagramPage() {
                           className="w-12 h-12 object-cover"
                         />
                       ) : (
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
                           {post.media_type === "VIDEO" ? (
                             <TrendingUp size={18} className="text-pink-500" />
                           ) : (
@@ -368,8 +368,8 @@ export default function InstagramPage() {
         /* ── Not Connected: Banner + Mock Preview ────── */
         <div className="space-y-6">
           {/* Connect Banner */}
-          <div className="bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 border border-border rounded-xl p-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center mx-auto mb-4">
+          <div className="bg-pink-50 dark:bg-pink-900/10 border border-border rounded-xl p-8 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-pink-500 flex items-center justify-center mx-auto mb-4">
               <Instagram size={32} className="text-white" />
             </div>
             <h2 className="text-lg font-bold text-foreground-primary mb-2">
@@ -381,7 +381,7 @@ export default function InstagramPage() {
             </p>
             <button
               onClick={() => window.location.href = "/settings/integracoes"}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors"
             >
               <Link2 size={16} />
               Configurar Integração
@@ -401,7 +401,7 @@ export default function InstagramPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
               <div className="bg-background-primary border border-border rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-pink-500 flex items-center justify-center">
                     <span className="text-white font-bold text-lg">T</span>
                   </div>
                   <div>
@@ -463,7 +463,7 @@ export default function InstagramPage() {
                     key={post.id}
                     className="flex items-center gap-4 p-3 rounded-lg bg-background-secondary"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center shrink-0">
                       {post.type === "reel" ? (
                         <TrendingUp size={18} className="text-pink-500" />
                       ) : (

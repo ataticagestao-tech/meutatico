@@ -10,6 +10,8 @@ import { CLIENT_STATUSES, STATUS_COLORS } from "@/lib/constants";
 import api from "@/lib/api";
 import { ClientAvatar } from "@/components/clients/client-avatar";
 import { ClientActionsMenu } from "@/components/clients/client-actions-menu";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonTable } from "@/components/ui/skeleton";
 import type { Client, ClientStatus } from "@/types/client";
 import type { PaginatedResponse } from "@/types/api";
 
@@ -221,23 +223,33 @@ export default function ClientsPage() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <div className="flex items-center justify-center gap-3 text-foreground-tertiary">
-                      <div className="animate-spin h-5 w-5 border-2 border-brand-primary border-t-transparent rounded-full" />
-                      <span className="text-sm">Carregando...</span>
-                    </div>
+                  <td colSpan={6} className="p-0">
+                    <SkeletonTable rows={6} columns={6} />
                   </td>
                 </tr>
               ) : clients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <Users
-                      size={40}
-                      className="mx-auto mb-2 text-foreground-tertiary opacity-50"
+                  <td colSpan={6} className="p-0">
+                    <EmptyState
+                      icon={Users}
+                      title={debouncedSearch || statusFilter ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+                      description={
+                        debouncedSearch || statusFilter
+                          ? "Ajuste a busca ou os filtros para ver mais resultados."
+                          : "Cadastre seu primeiro cliente para comecar."
+                      }
+                      action={
+                        !debouncedSearch && !statusFilter && (
+                          <Link
+                            href="/clients/new"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg text-sm font-medium hover:opacity-90"
+                          >
+                            <Plus size={16} />
+                            Novo Cliente
+                          </Link>
+                        )
+                      }
                     />
-                    <p className="text-foreground-tertiary text-sm">
-                      Nenhum cliente encontrado
-                    </p>
                   </td>
                 </tr>
               ) : (

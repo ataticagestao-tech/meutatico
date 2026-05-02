@@ -16,6 +16,7 @@ node_modules/
 .next/
 out/
 .turbo/
+*.tsbuildinfo
 
 # Environment
 .env
@@ -44,3 +45,5 @@ uploads/
 htmlcov/
 .coverage
 coverage.xml
+
+.vercel

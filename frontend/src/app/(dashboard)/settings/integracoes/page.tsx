@@ -19,6 +19,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import api from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { QuickTooltip } from "@/components/ui/tooltip";
 
 interface IntegrationItem {
   key: string;
@@ -189,8 +191,22 @@ export default function IntegracoesPage() {
         title="Integrações"
         breadcrumb={[{ label: "Configurações", href: "/settings" }, { label: "Integrações" }]}
       >
-        <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-brand-primary" />
+        <div className="mb-6">
+          <Skeleton className="h-16 w-full rounded-xl" />
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-background-primary border border-border rounded-xl p-5">
+              <div className="flex items-start gap-4">
+                <Skeleton className="h-12 w-12 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-full max-w-md" />
+                  <Skeleton className="h-3 w-3/4 max-w-sm" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </PageWrapper>
     );
@@ -294,18 +310,19 @@ export default function IntegracoesPage() {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => refresh(integration)}
-                  disabled={isRefreshing}
-                  className="p-2 text-foreground-tertiary hover:text-foreground-primary hover:bg-background-secondary rounded-lg shrink-0"
-                  title="Verificar conexão"
-                >
-                  {isRefreshing ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={16} />
-                  )}
-                </button>
+                <QuickTooltip label="Verificar conexao" side="left">
+                  <button
+                    onClick={() => refresh(integration)}
+                    disabled={isRefreshing}
+                    className="p-2 text-foreground-tertiary hover:text-foreground-primary hover:bg-background-secondary rounded-lg shrink-0"
+                  >
+                    {isRefreshing ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={16} />
+                    )}
+                  </button>
+                </QuickTooltip>
               </div>
             </div>
           );

@@ -217,6 +217,105 @@ class AuthService:
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.send_message(msg)
 
+    async def login_or_create_via_google(
+        self, email: str, name: str, avatar_url: str | None = None
+    ) -> dict:
+        """Loga via Google. Se o email nao existe em nenhum tenant,
+        cria o usuario no primeiro tenant ativo (sem roles).
+
+        password_hash recebe um valor random impossivel de validar via login normal.
+        """
+        import secrets as _secrets
+
+        tenants_result = await self.db.execute(
+            select(Tenant).where(Tenant.status == "active").order_by(Tenant.created_at)
+        )
+        tenants = tenants_result.scalars().all()
+
+        if not tenants:
+            raise BadRequestException("Nenhum tenant ativo configurado")
+
+        # 1) Procura usuario existente em todos os tenants
+        for tenant in tenants:
+            await set_tenant_schema(self.db, tenant.schema_name)
+            result = await self.db.execute(
+                select(User).where(User.email == email, User.is_active == True)
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                return await self._build_session(user, tenant)
+
+        # 2) Nao encontrou — cria no primeiro tenant ativo (sem roles)
+        primary_tenant = tenants[0]
+        await set_tenant_schema(self.db, primary_tenant.schema_name)
+
+        random_password = _secrets.token_urlsafe(48)
+        new_user = User(
+            tenant_id=primary_tenant.id,
+            name=name,
+            email=email,
+            password_hash=hash_password(random_password),
+            avatar_url=avatar_url,
+            is_active=True,
+        )
+        self.db.add(new_user)
+        await self.db.flush()
+        await self.db.refresh(new_user)
+
+        return await self._build_session(new_user, primary_tenant)
+
+    async def _build_session(self, user: User, tenant: Tenant) -> dict:
+        """Monta tokens + payload de sessao a partir do user/tenant resolvidos."""
+        roles_result = await self.db.execute(
+            select(Role)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == user.id)
+        )
+        roles = roles_result.scalars().all()
+        role_slugs = [r.slug for r in roles]
+
+        perms_result = await self.db.execute(
+            select(Permission)
+            .join(RolePermission, RolePermission.permission_id == Permission.id)
+            .join(Role, Role.id == RolePermission.role_id)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == user.id)
+        )
+        permissions = perms_result.scalars().all()
+        perm_keys = list({f"{p.module_key}.{p.action}" for p in permissions})
+
+        user.last_login_at = datetime.now(timezone.utc)
+        await self.db.flush()
+
+        token_data = {
+            "sub": str(user.id),
+            "tenant_id": str(tenant.id),
+            "tenant_schema": tenant.schema_name,
+            "roles": role_slugs,
+            "permissions": perm_keys,
+        }
+
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": {
+                "id": str(user.id),
+                "name": user.name,
+                "email": user.email,
+                "roles": role_slugs,
+                "permissions": perm_keys,
+            },
+            "tenant": {
+                "id": str(tenant.id),
+                "name": tenant.name,
+                "slug": tenant.slug,
+                "schema_name": tenant.schema_name,
+            },
+        }
+
     async def super_admin_login(self, email: str, password: str) -> dict:
         """Login do SuperAdmin."""
         result = await self.db.execute(
