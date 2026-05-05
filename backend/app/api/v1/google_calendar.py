@@ -7,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.dependencies import get_current_user, get_db
-from app.services.google_calendar_service import GoogleCalendarService
+from app.services.google_calendar_service import (
+    GoogleCalendarService,
+    refresh_all_expiring_google_tokens,
+)
 
 router = APIRouter(prefix="/google-calendar", tags=["Google Calendar"])
 
@@ -119,3 +122,16 @@ async def disconnect_google(
     """Disconnect Google Calendar (revoke token)."""
     svc = _get_service(db, current_user)
     return await svc.disconnect()
+
+
+@router.post("/refresh-all")
+async def refresh_all_tokens(
+    current_user: Annotated[dict, Depends(get_current_user)],
+    window_minutes: int = Query(45, ge=5, le=1440),
+):
+    """Refresh manualmente todos os tokens Google que vao expirar dentro
+    de `window_minutes`. Util para forcar renovacao sem esperar o cron.
+
+    O scheduler em background ja roda a cada 30 minutos com window=45
+    (ver app.main.lifespan)."""
+    return await refresh_all_expiring_google_tokens(window_minutes=window_minutes)

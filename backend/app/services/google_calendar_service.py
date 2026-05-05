@@ -488,3 +488,77 @@ class GoogleCalendarService:
 
         await self.db.flush()
         return {"synced": True, "created": created, "updated": updated}
+
+
+# ───────────────────────────────────────────────────────────────────────
+# Module-level helper: refresh all tokens that are expiring soon.
+# Used by the APScheduler job in app.main.lifespan.
+# ───────────────────────────────────────────────────────────────────────
+
+async def refresh_all_expiring_google_tokens(window_minutes: int = 30) -> dict:
+    """Refresh every Google OAuth token that expires within `window_minutes`.
+
+    Runs against ALL tenants (no tenant scoping needed — table is shared in this
+    project's setup since set_tenant_schema is no-op).
+
+    Returns: {"checked": N, "refreshed": M, "failed": K, "skipped": S}
+    """
+    from app.database import async_session_factory
+
+    if not (settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET):
+        logger.info("Google OAuth not configured — skipping refresh job")
+        return {"checked": 0, "refreshed": 0, "failed": 0, "skipped": 0}
+
+    cutoff = datetime.utcnow() + timedelta(minutes=window_minutes)
+    refreshed = 0
+    failed = 0
+    skipped = 0
+
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(GoogleOAuthToken).where(GoogleOAuthToken.token_expires_at <= cutoff)
+        )
+        tokens = list(result.scalars().all())
+        checked = len(tokens)
+
+        for token in tokens:
+            if not token.refresh_token:
+                # Sem refresh_token nao da pra renovar — pular
+                skipped += 1
+                continue
+
+            try:
+                async with httpx.AsyncClient(timeout=15) as client:
+                    resp = await client.post(
+                        GOOGLE_TOKEN_URL,
+                        data={
+                            "client_id": settings.GOOGLE_CLIENT_ID,
+                            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                            "refresh_token": token.refresh_token,
+                            "grant_type": "refresh_token",
+                        },
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+
+                token.access_token = data["access_token"]
+                expires_in = data.get("expires_in", 3600)
+                token.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+                refreshed += 1
+                logger.info(
+                    "Google token refreshed for user_id=%s email=%s expires_in=%ss",
+                    token.user_id, token.email, expires_in,
+                )
+            except Exception as exc:
+                failed += 1
+                logger.warning(
+                    "Google token refresh failed for user_id=%s: %s",
+                    token.user_id, exc,
+                )
+
+        if refreshed:
+            await session.commit()
+
+    summary = {"checked": checked, "refreshed": refreshed, "failed": failed, "skipped": skipped}
+    logger.info("Google token refresh job done: %s", summary)
+    return summary

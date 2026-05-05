@@ -1,5 +1,8 @@
+import logging
 from contextlib import asynccontextmanager
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,6 +13,8 @@ from app.api.v1.router import api_router
 from app.config import settings
 from app.exceptions import AppException, app_exception_handler
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,11 +22,35 @@ async def lifespan(app: FastAPI):
     import os
     from app.database import engine, Base
     from app import models  # noqa
+    from app.services.google_calendar_service import refresh_all_expiring_google_tokens
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     os.makedirs(settings.STORAGE_LOCAL_PATH, exist_ok=True)
+
+    # Background scheduler — refresca tokens Google a cada 30 min.
+    # Renova qualquer token que vai expirar nos proximos 45 min, criando overlap
+    # confortavel. Sem isso, tokens ficam stale enquanto ninguem usa Calendar.
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        refresh_all_expiring_google_tokens,
+        IntervalTrigger(minutes=30),
+        kwargs={"window_minutes": 45},
+        id="google_token_refresh",
+        max_instances=1,
+        coalesce=True,
+        next_run_time=None,  # primeira execucao apos 30 min — startup nao bloqueia
+    )
+    scheduler.start()
+    app.state.scheduler = scheduler
+    logger.info("Background scheduler started (Google token refresh every 30min)")
+
     yield
+
     # Shutdown
+    if hasattr(app.state, "scheduler"):
+        app.state.scheduler.shutdown(wait=False)
+        logger.info("Background scheduler stopped")
 
 
 app = FastAPI(
