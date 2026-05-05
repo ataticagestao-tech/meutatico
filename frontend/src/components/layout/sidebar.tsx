@@ -209,23 +209,23 @@ export function Sidebar() {
     <aside
       className={`
         ${collapsed ? "w-[68px]" : "w-[260px]"}
-        h-screen bg-background-sidebar border-r border-border flex flex-col
+        h-screen bg-background-sidebar border-r border-slate-700/40 flex flex-col
         transition-all duration-300 ease-in-out shrink-0
       `}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-border">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-slate-700/40">
         <div className="flex items-center gap-2.5 min-w-0">
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none" className="shrink-0">
-            <rect x="3" y="3" width="19" height="19" rx="4" fill="#3b5bdb" />
-            <rect x="26" y="3" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
-            <rect x="3" y="26" width="19" height="19" rx="4" fill="#3b5bdb" opacity=".2" />
-            <rect x="26" y="26" width="19" height="19" rx="4" fill="#3b5bdb" />
+            <rect x="3" y="3" width="19" height="19" rx="4" fill="#5570e8" />
+            <rect x="26" y="3" width="19" height="19" rx="4" fill="#5570e8" opacity=".3" />
+            <rect x="3" y="26" width="19" height="19" rx="4" fill="#5570e8" opacity=".3" />
+            <rect x="26" y="26" width="19" height="19" rx="4" fill="#5570e8" />
           </svg>
           {!collapsed && (
             <div className="min-w-0">
-              <span className="text-[15px] font-bold tracking-tight block leading-tight">tática</span>
-              <span className="text-[9px] uppercase tracking-[1.5px] text-foreground-tertiary font-medium leading-none">
+              <span className="text-[15px] font-bold tracking-tight block leading-tight text-white">tática</span>
+              <span className="text-[9px] uppercase tracking-[1.5px] text-slate-400 font-medium leading-none">
                 gestão estratégica
               </span>
             </div>
@@ -233,7 +233,7 @@ export function Sidebar() {
         </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-background-tertiary text-foreground-tertiary hover:text-foreground-primary transition-colors shrink-0"
+          className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors shrink-0"
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
@@ -266,12 +266,12 @@ export function Sidebar() {
                     transition-colors group cursor-pointer
                     ${
                       active
-                        ? `${colors.bg} text-foreground-primary`
-                        : "text-foreground-secondary hover:bg-background-tertiary hover:text-foreground-primary"
+                        ? `${colors.bgOnDark} text-white`
+                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                     }
                   `}
                 >
-                  <div className={`shrink-0 ${active ? colors.solid : "text-foreground-tertiary"}`}>
+                  <div className={`shrink-0 ${active ? colors.solidOnDark : "text-slate-400"}`}>
                     <item.icon size={20} />
                   </div>
                   {!collapsed && (
@@ -279,7 +279,7 @@ export function Sidebar() {
                       <span className="flex-1 text-left">{item.label}</span>
                       <ChevronDown
                         size={16}
-                        className={`shrink-0 text-foreground-tertiary transition-transform duration-200 ${
+                        className={`shrink-0 text-slate-500 transition-transform duration-200 ${
                           expanded ? "rotate-180" : ""
                         }`}
                       />
@@ -294,7 +294,7 @@ export function Sidebar() {
                       expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="ml-5 pl-4 border-l border-border mt-0.5 mb-1 space-y-0.5">
+                    <div className="ml-5 pl-4 border-l border-slate-700/40 mt-0.5 mb-1 space-y-0.5">
                       {(() => {
                         const activeHref = getActiveChildHref(item.children);
                         return item.children.map((child) => {
@@ -304,12 +304,12 @@ export function Sidebar() {
                             return (
                               <div
                                 key={child.href}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-foreground-tertiary cursor-not-allowed"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 cursor-not-allowed"
                               >
                                 <Lock size={12} className="shrink-0" />
                                 <span className="flex-1">{child.label}</span>
                                 {child.badge && (
-                                  <span className="text-[10px] bg-white/5 text-foreground-tertiary px-1.5 py-0.5 rounded">
+                                  <span className="text-[10px] bg-slate-700/40 text-slate-400 px-1.5 py-0.5 rounded">
                                     {child.badge}
                                   </span>
                                 )}
@@ -326,19 +326,19 @@ export function Sidebar() {
                                 transition-colors
                                 ${
                                   isChildActive
-                                    ? `${colors.solid} ${colors.bg}`
-                                    : "text-foreground-tertiary hover:text-foreground-primary hover:bg-background-tertiary"
+                                    ? `${colors.solidOnDark} ${colors.bgOnDark}`
+                                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
                                 }
                               `}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  isChildActive ? colors.dot : "bg-foreground-tertiary/40"
+                                  isChildActive ? colors.dot : "bg-slate-600"
                                 }`}
                               />
                               <span className="flex-1">{child.label}</span>
                               {child.badge && (
-                                <span className="text-[10px] bg-background-tertiary text-foreground-tertiary px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] bg-slate-700/50 text-slate-300 px-1.5 py-0.5 rounded">
                                   {child.badge}
                                 </span>
                               )}
@@ -355,12 +355,12 @@ export function Sidebar() {
         </div>
 
         {/* Separator */}
-        <div className="my-4 border-t border-border" />
+        <div className="my-4 border-t border-slate-700/40" />
 
         {/* Settings Section */}
         <div className="mb-2">
           {!collapsed && (
-            <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-foreground-tertiary">
+            <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Configurações
             </span>
           )}
@@ -375,8 +375,8 @@ export function Sidebar() {
                 transition-colors
                 ${
                   isSettingActive(item.href)
-                    ? "bg-brand-primary text-white"
-                    : "text-foreground-secondary hover:bg-background-tertiary hover:text-foreground-primary"
+                    ? "bg-slate-500/20 text-white"
+                    : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                 }
               `}
             >
@@ -388,7 +388,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-slate-700/40">
         <Link
           href="/settings"
           className={`
@@ -396,8 +396,8 @@ export function Sidebar() {
             transition-colors
             ${
               pathname === "/settings"
-                ? "bg-brand-primary text-white"
-                : "text-foreground-tertiary hover:bg-background-tertiary hover:text-foreground-primary"
+                ? "bg-slate-500/20 text-white"
+                : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
             }
           `}
         >

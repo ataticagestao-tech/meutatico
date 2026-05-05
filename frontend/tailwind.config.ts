@@ -21,6 +21,7 @@ const config: Config = {
           secondary: "var(--color-bg-secondary)",
           tertiary: "var(--color-bg-tertiary)",
           sidebar: "var(--color-bg-sidebar)",
+          header: "var(--color-bg-header)",
         },
         foreground: {
           primary: "var(--color-text-primary)",

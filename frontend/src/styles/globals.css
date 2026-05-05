@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* ═══ TATICA Brand v7 — Alto Contraste (WCAG AAA) ═══ */
+  /* ═══ TATICA Brand v8 — Sidebar/Header escuros, conteudo branco ═══ */
 
-  /* Background — creme quente em vez de branco/cinza */
-  --color-bg-primary: #FAF6EE;
-  --color-bg-secondary: #F2EDE0;
-  --color-bg-tertiary: #E8E2D2;
-  --color-bg-sidebar: #FAF6EE;
+  /* Background — branco no conteudo, cinza escuro nas chrome (sidebar/header) */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F8FAFC;
+  --color-bg-tertiary: #F1F5F9;
+  --color-bg-sidebar: #1F2937;
+  --color-bg-header: #1F2937;
 
   /* Texto — preto puro + cinzas escuros (contraste AAA) */
   --color-text-primary: #000000;
@@ -18,7 +19,7 @@
   --color-text-inverse: #FFFFFF;
 
   /* Bordas — visíveis no fundo claro */
-  --color-border: #9CA3AF;
+  --color-border: #E2E8F0;
   --color-border-focus: #3b5bdb;
 
   /* Brand — Navy + Gold (Swiss Luxury Minimal) */

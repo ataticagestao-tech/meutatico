@@ -16,12 +16,16 @@ export type ModuleKey =
 
 export interface ModuleColor {
   key: ModuleKey;
-  // Solid color (text/icon when active or as accent)
+  // Solid color (text/icon when active or as accent) — light mode
   solid: string;
+  // Solid color light tone — for text/icon on dark backgrounds (sidebar/header)
+  solidOnDark: string;
   // Solid as background (dot indicator)
   dot: string;
   // Soft tint (background tile) — light mode + dark mode
   bg: string;
+  // Soft tint over dark surface (sidebar active item)
+  bgOnDark: string;
   // Border accent (active state)
   border: string;
   // Tailwind hex hint (for non-class needs)
@@ -32,88 +36,110 @@ export const MODULE_COLORS: Record<ModuleKey, ModuleColor> = {
   dashboard: {
     key: "dashboard",
     solid: "text-indigo-500",
+    solidOnDark: "text-indigo-300",
     dot: "bg-indigo-500",
     bg: "bg-indigo-50 dark:bg-indigo-900/20",
+    bgOnDark: "bg-indigo-500/15",
     border: "border-indigo-500",
     hex: "#6366f1",
   },
   clients: {
     key: "clients",
     solid: "text-sky-500",
+    solidOnDark: "text-sky-300",
     dot: "bg-sky-500",
     bg: "bg-sky-50 dark:bg-sky-900/20",
+    bgOnDark: "bg-sky-500/15",
     border: "border-sky-500",
     hex: "#0ea5e9",
   },
   tasks: {
     key: "tasks",
     solid: "text-amber-500",
+    solidOnDark: "text-amber-300",
     dot: "bg-amber-500",
     bg: "bg-amber-50 dark:bg-amber-900/20",
+    bgOnDark: "bg-amber-500/15",
     border: "border-amber-500",
     hex: "#f59e0b",
   },
   calendar: {
     key: "calendar",
     solid: "text-rose-500",
+    solidOnDark: "text-rose-300",
     dot: "bg-rose-500",
     bg: "bg-rose-50 dark:bg-rose-900/20",
+    bgOnDark: "bg-rose-500/15",
     border: "border-rose-500",
     hex: "#f43f5e",
   },
   documents: {
     key: "documents",
     solid: "text-violet-500",
+    solidOnDark: "text-violet-300",
     dot: "bg-violet-500",
     bg: "bg-violet-50 dark:bg-violet-900/20",
+    bgOnDark: "bg-violet-500/15",
     border: "border-violet-500",
     hex: "#8b5cf6",
   },
   estoque: {
     key: "estoque",
     solid: "text-orange-500",
+    solidOnDark: "text-orange-300",
     dot: "bg-orange-500",
     bg: "bg-orange-50 dark:bg-orange-900/20",
+    bgOnDark: "bg-orange-500/15",
     border: "border-orange-500",
     hex: "#f97316",
   },
   multiempresa: {
     key: "multiempresa",
     solid: "text-teal-500",
+    solidOnDark: "text-teal-300",
     dot: "bg-teal-500",
     bg: "bg-teal-50 dark:bg-teal-900/20",
+    bgOnDark: "bg-teal-500/15",
     border: "border-teal-500",
     hex: "#14b8a6",
   },
   financeiro: {
     key: "financeiro",
     solid: "text-emerald-500",
+    solidOnDark: "text-emerald-300",
     dot: "bg-emerald-500",
     bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    bgOnDark: "bg-emerald-500/15",
     border: "border-emerald-500",
     hex: "#10b981",
   },
   comunicacao: {
     key: "comunicacao",
     solid: "text-pink-500",
+    solidOnDark: "text-pink-300",
     dot: "bg-pink-500",
     bg: "bg-pink-50 dark:bg-pink-900/20",
+    bgOnDark: "bg-pink-500/15",
     border: "border-pink-500",
     hex: "#ec4899",
   },
   tickets: {
     key: "tickets",
     solid: "text-orange-500",
+    solidOnDark: "text-orange-300",
     dot: "bg-orange-500",
     bg: "bg-orange-50 dark:bg-orange-900/20",
+    bgOnDark: "bg-orange-500/15",
     border: "border-orange-500",
     hex: "#f97316",
   },
   settings: {
     key: "settings",
     solid: "text-slate-500",
+    solidOnDark: "text-slate-300",
     dot: "bg-slate-500",
     bg: "bg-slate-100 dark:bg-slate-800/40",
+    bgOnDark: "bg-slate-500/20",
     border: "border-slate-500",
     hex: "#64748b",
   },

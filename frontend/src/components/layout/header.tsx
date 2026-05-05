@@ -58,17 +58,17 @@ export function Header() {
     : { name: "Usuário" };
 
   return (
-    <header className="h-14 bg-background-primary/80 backdrop-blur-md border-b border-border flex items-center justify-between px-5 shrink-0 sticky top-0 z-10">
+    <header className="h-14 bg-background-header border-b border-slate-700/40 flex items-center justify-between px-5 shrink-0 sticky top-0 z-10">
       {/* Search trigger (opens command palette) */}
       <div className="flex items-center gap-3 flex-1 max-w-sm">
         <button
           type="button"
           onClick={() => setPaletteOpen(true)}
-          className="group relative flex-1 flex items-center gap-2 pl-3 pr-2 py-1.5 bg-background-secondary border border-border rounded-lg text-sm text-foreground-tertiary hover:border-brand-primary/40 hover:bg-background-primary transition-colors text-left"
+          className="group relative flex-1 flex items-center gap-2 pl-3 pr-2 py-1.5 bg-slate-700/40 border border-slate-600/50 rounded-lg text-sm text-slate-300 hover:border-slate-500 hover:bg-slate-700/60 transition-colors text-left"
         >
-          <Search size={16} className="shrink-0" />
+          <Search size={16} className="shrink-0 text-slate-400" />
           <span className="flex-1 truncate">Buscar paginas, acoes...</span>
-          <kbd className="shrink-0 hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-background-tertiary border border-border font-mono text-[10px] text-foreground-tertiary">
+          <kbd className="shrink-0 hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-600/60 font-mono text-[10px] text-slate-300">
             {isMac ? "⌘K" : "Ctrl K"}
           </kbd>
         </button>
@@ -80,7 +80,7 @@ export function Header() {
         <QuickTooltip label={theme === "light" ? "Modo escuro" : "Modo claro"}>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
           >
             {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
@@ -88,9 +88,9 @@ export function Header() {
 
         {/* Notifications */}
         <QuickTooltip label="Notificacoes">
-          <button className="relative p-2 rounded-lg hover:bg-background-tertiary text-foreground-secondary transition-colors">
+          <button className="relative p-2 rounded-lg hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors">
             <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background-primary" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-background-header" />
           </button>
         </QuickTooltip>
 
@@ -99,14 +99,14 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-3 ml-2 pl-4 border-l border-border outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 rounded-lg"
+              className="flex items-center gap-3 ml-2 pl-4 border-l border-slate-700/50 outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 rounded-lg"
               aria-label="Abrir menu do usuário"
             >
               <div className="text-right hidden sm:block">
-                <p className="text-[13px] font-medium text-foreground-primary leading-tight">{user.name}</p>
-                <p className="text-[11px] text-foreground-tertiary">{user.email}</p>
+                <p className="text-[13px] font-medium text-white leading-tight">{user.name}</p>
+                <p className="text-[11px] text-slate-400">{user.email}</p>
               </div>
-              <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-xs ring-2 ring-brand-primary/20">
+              <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-white font-medium text-xs ring-2 ring-brand-primary/30">
                 {user.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
             </button>
