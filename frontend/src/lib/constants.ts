@@ -59,28 +59,31 @@ export const CLIENT_STATUSES = [
 // ---------------------------------------------------------------------------
 
 export const STATUS_COLORS: Record<string, string> = {
-  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  in_progress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  waiting_client: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  waiting_internal: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  resolved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  closed: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-  backlog: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300',
-  todo: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  review: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
-  done: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-  onboarding: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  suspended: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  churned: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  // Tickets
+  open: 'bg-orange-100 text-orange-700 ring-1 ring-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:ring-orange-800',
+  in_progress: 'bg-sky-100 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:ring-sky-800',
+  waiting_client: 'bg-pink-100 text-pink-700 ring-1 ring-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:ring-pink-800',
+  waiting_internal: 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800',
+  resolved: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800',
+  closed: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:ring-slate-700',
+  // Tasks
+  backlog: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:ring-slate-700',
+  todo: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-800',
+  review: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800',
+  done: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800',
+  // Clients
+  active: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800',
+  inactive: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:ring-slate-700',
+  onboarding: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-800',
+  suspended: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800',
+  churned: 'bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800',
 }
 
 export const PRIORITY_COLORS: Record<string, string> = {
-  low: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300',
-  medium: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  urgent: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  low: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:ring-slate-700',
+  medium: 'bg-sky-100 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:ring-sky-800',
+  high: 'bg-orange-100 text-orange-700 ring-1 ring-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:ring-orange-800',
+  urgent: 'bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800',
 }
 
 // ---------------------------------------------------------------------------

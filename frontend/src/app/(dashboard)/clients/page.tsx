@@ -232,6 +232,7 @@ export default function ClientsPage() {
                   <td colSpan={6} className="p-0">
                     <EmptyState
                       icon={Users}
+                      accent="sky"
                       title={debouncedSearch || statusFilter ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
                       description={
                         debouncedSearch || statusFilter

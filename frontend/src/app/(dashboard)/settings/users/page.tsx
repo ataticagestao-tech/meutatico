@@ -263,6 +263,7 @@ export default function SettingsUsersPage() {
                   <td colSpan={6} className="p-0">
                     <EmptyState
                       icon={Users}
+                      accent="indigo"
                       title={debouncedSearch ? "Nenhum usuario encontrado" : "Nenhum usuario cadastrado"}
                       description={
                         debouncedSearch

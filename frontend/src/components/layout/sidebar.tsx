@@ -24,6 +24,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import { MODULE_COLORS, type ModuleKey } from "@/lib/module-colors";
 
 interface SubItem {
   label: string;
@@ -36,7 +37,7 @@ interface MenuItem {
   label: string;
   icon: React.ElementType;
   href: string;
-  
+  moduleKey: ModuleKey;
   children: SubItem[];
 }
 
@@ -45,6 +46,7 @@ const menuItems: MenuItem[] = [
     label: "Dashboard",
     icon: BarChart3,
     href: "/dashboard",
+    moduleKey: "dashboard",
     children: [
       { label: "Visão Geral", href: "/dashboard" },
       { label: "Meu Dia", href: "/dashboard/meu-dia" },
@@ -55,6 +57,7 @@ const menuItems: MenuItem[] = [
     label: "Clientes",
     icon: Users,
     href: "/clients",
+    moduleKey: "clients",
     children: [
       { label: "Lista de Clientes", href: "/clients" },
       { label: "Onboarding", href: "/clients/onboarding" },
@@ -65,6 +68,7 @@ const menuItems: MenuItem[] = [
     label: "Tarefas",
     icon: CheckSquare,
     href: "/tasks",
+    moduleKey: "tasks",
     children: [
       { label: "Quadro Kanban", href: "/tasks" },
       { label: "Templates", href: "/tasks/templates" },
@@ -76,6 +80,7 @@ const menuItems: MenuItem[] = [
     label: "Calendário",
     icon: Calendar,
     href: "/calendar",
+    moduleKey: "calendar",
     children: [
       { label: "Calendário Geral", href: "/calendar" },
       { label: "Agendar Reunião", href: "/calendar/agendar" },
@@ -86,6 +91,7 @@ const menuItems: MenuItem[] = [
     label: "Documentos",
     icon: FolderOpen,
     href: "/documents",
+    moduleKey: "documents",
     children: [
       { label: "Explorador", href: "/documents" },
       { label: "Gerar Contrato", href: "/documents/contratos" },
@@ -98,6 +104,7 @@ const menuItems: MenuItem[] = [
     label: "Estoque",
     icon: Package,
     href: "/estoque",
+    moduleKey: "estoque",
     children: [
       { label: "Produtos & Insumos", href: "/estoque/produtos" },
       { label: "Ordens de Compra", href: "/estoque/ordens-compra" },
@@ -108,6 +115,7 @@ const menuItems: MenuItem[] = [
     label: "Multi-empresa",
     icon: GitMerge,
     href: "/multiempresa",
+    moduleKey: "multiempresa",
     children: [
       { label: "Consolidado", href: "/multiempresa" },
       { label: "Transferências", href: "/multiempresa/transferencias" },
@@ -118,6 +126,7 @@ const menuItems: MenuItem[] = [
     label: "Financeiro",
     icon: DollarSign,
     href: "/financeiro",
+    moduleKey: "financeiro",
     children: [
       { label: "Painel do Cliente", href: "/financeiro" },
       { label: "Rotina Mensal", href: "/financeiro/rotina" },
@@ -129,6 +138,7 @@ const menuItems: MenuItem[] = [
     label: "Comunicação",
     icon: MessageSquare,
     href: "/comunicacao",
+    moduleKey: "comunicacao",
     children: [
       { label: "Inbox Unificado", href: "/comunicacao" },
       { label: "Email", href: "/comunicacao/email" },
@@ -235,6 +245,7 @@ export function Sidebar() {
           {menuItems.map((item) => {
             const active = isMenuActive(item);
             const expanded = expandedMenus.includes(item.label);
+            const colors = MODULE_COLORS[item.moduleKey];
 
             return (
               <div key={item.label}>
@@ -255,17 +266,13 @@ export function Sidebar() {
                     transition-colors group cursor-pointer
                     ${
                       active
-                        ? "bg-blue-50 text-brand-primary"
+                        ? `${colors.bg} text-foreground-primary`
                         : "text-foreground-secondary hover:bg-background-tertiary hover:text-foreground-primary"
                     }
                   `}
                 >
-                  <div className="relative shrink-0">
+                  <div className={`shrink-0 ${active ? colors.solid : "text-foreground-tertiary"}`}>
                     <item.icon size={20} />
-                    {/* Color indicator dot */}
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 bg-brand-primary`}
-                    />
                   </div>
                   {!collapsed && (
                     <>
@@ -319,14 +326,14 @@ export function Sidebar() {
                                 transition-colors
                                 ${
                                   isChildActive
-                                    ? "text-brand-primary bg-blue-50"
+                                    ? `${colors.solid} ${colors.bg}`
                                     : "text-foreground-tertiary hover:text-foreground-primary hover:bg-background-tertiary"
                                 }
                               `}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  isChildActive ? "bg-brand-primary" : "bg-foreground-tertiary/40"
+                                  isChildActive ? colors.dot : "bg-foreground-tertiary/40"
                                 }`}
                               />
                               <span className="flex-1">{child.label}</span>

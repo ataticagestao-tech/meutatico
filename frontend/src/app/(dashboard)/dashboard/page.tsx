@@ -118,8 +118,9 @@ export default function DashboardPage() {
       label: "Clientes Ativos",
       value: kpis.active_clients,
       icon: Users,
-      color: "text-blue-500",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
+      color: "text-sky-500",
+      bg: "bg-sky-50 dark:bg-sky-900/20",
+      ring: "ring-sky-200/60 dark:ring-sky-700/30",
       href: "/clients",
     },
     {
@@ -128,44 +129,49 @@ export default function DashboardPage() {
       icon: CheckSquare,
       color: "text-amber-500",
       bg: "bg-amber-50 dark:bg-amber-900/20",
+      ring: "ring-amber-200/60 dark:ring-amber-700/30",
       href: "/tasks",
     },
     {
       label: "Tarefas Atrasadas",
       value: kpis.overdue_tasks,
       icon: AlertTriangle,
-      color: kpis.overdue_tasks > 0 ? "text-red-500" : "text-green-500",
+      color: kpis.overdue_tasks > 0 ? "text-rose-500" : "text-emerald-500",
       bg:
         kpis.overdue_tasks > 0
-          ? "bg-red-50 dark:bg-red-900/20"
-          : "bg-green-50 dark:bg-green-900/20",
+          ? "bg-rose-50 dark:bg-rose-900/20"
+          : "bg-emerald-50 dark:bg-emerald-900/20",
+      ring: kpis.overdue_tasks > 0 ? "ring-rose-200/60 dark:ring-rose-700/30" : "ring-emerald-200/60 dark:ring-emerald-700/30",
       href: "/tasks",
     },
     {
       label: "Concluídas no Mês",
       value: kpis.completed_this_month,
       icon: TrendingUp,
-      color: "text-green-500",
-      bg: "bg-green-50 dark:bg-green-900/20",
+      color: "text-emerald-500",
+      bg: "bg-emerald-50 dark:bg-emerald-900/20",
+      ring: "ring-emerald-200/60 dark:ring-emerald-700/30",
       href: "/tasks",
     },
     {
       label: "Solicitações Abertas",
       value: kpis.open_tickets,
       icon: Ticket,
-      color: "text-orange-500",
-      bg: "bg-orange-50 dark:bg-orange-900/20",
+      color: "text-violet-500",
+      bg: "bg-violet-50 dark:bg-violet-900/20",
+      ring: "ring-violet-200/60 dark:ring-violet-700/30",
       href: "/tickets",
     },
     {
       label: "Solicitações Atrasadas",
       value: kpis.overdue_tickets,
       icon: AlertTriangle,
-      color: kpis.overdue_tickets > 0 ? "text-red-500" : "text-green-500",
+      color: kpis.overdue_tickets > 0 ? "text-rose-500" : "text-emerald-500",
       bg:
         kpis.overdue_tickets > 0
-          ? "bg-red-50 dark:bg-red-900/20"
-          : "bg-green-50 dark:bg-green-900/20",
+          ? "bg-rose-50 dark:bg-rose-900/20"
+          : "bg-emerald-50 dark:bg-emerald-900/20",
+      ring: kpis.overdue_tickets > 0 ? "ring-rose-200/60 dark:ring-rose-700/30" : "ring-emerald-200/60 dark:ring-emerald-700/30",
       href: "/tickets",
     },
   ];
@@ -215,16 +221,16 @@ export default function DashboardPage() {
           <button
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className="bg-background-primary border border-border rounded-xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow text-left"
+            className={`bg-background-primary border border-border rounded-xl p-5 flex items-center gap-4 hover:shadow-md hover:ring-2 ${stat.ring} transition-all text-left group`}
           >
-            <div className={`p-3 rounded-lg ${stat.bg}`}>
-              <stat.icon size={24} className={stat.color} />
+            <div className={`p-3 rounded-xl ${stat.bg} group-hover:scale-105 transition-transform`}>
+              <stat.icon size={26} className={stat.color} />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground-primary">
+              <p className={`text-3xl font-bold ${stat.color} leading-none`}>
                 {stat.value}
               </p>
-              <p className="text-sm text-foreground-secondary">{stat.label}</p>
+              <p className="text-sm text-foreground-secondary mt-1">{stat.label}</p>
             </div>
           </button>
         ))}
