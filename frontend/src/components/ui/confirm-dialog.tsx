@@ -68,7 +68,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground-primary hover:bg-background-tertiary transition-colors"
+              className="px-4 py-2 rounded-lg border border-slate-600/60 bg-slate-700/30 text-sm font-medium text-white hover:bg-slate-700/60 transition-colors"
             >
               {options.cancelLabel || 'Voltar'}
             </button>
@@ -77,7 +77,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               onClick={handleConfirm}
               className={
                 destructive
-                  ? 'px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors'
+                  ? 'px-4 py-2 rounded-lg text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 transition-colors'
                   : 'px-4 py-2 rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-secondary transition-colors'
               }
             >

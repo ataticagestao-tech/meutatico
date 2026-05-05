@@ -96,6 +96,54 @@
   .bg-background-primary.border-border.rounded-lg {
     box-shadow: var(--shadow-sm);
   }
+
+  /* Modais inline (nao Radix) usam pattern: <div fixed inset-0 z-50> com bg-black overlay
+     + <div relative bg-background-primary> como content. Aplicar tema escuro consistente
+     com Modal/ConfirmDialog (sidebar dark) — sem precisar tocar em 20+ arquivos. */
+  .fixed.inset-0.z-50 .relative.bg-background-primary {
+    background-color: #1F2937; /* slate-800 — combina com sidebar/header */
+    color: #FFFFFF;
+    border-color: rgba(71, 85, 105, 0.5); /* slate-600 com 50% */
+  }
+
+  /* Texto principal/secundario/terciario dentro do modal escuro */
+  .fixed.inset-0.z-50 .relative.bg-background-primary .text-foreground-primary {
+    color: #FFFFFF;
+  }
+  .fixed.inset-0.z-50 .relative.bg-background-primary .text-foreground-secondary {
+    color: #CBD5E1; /* slate-300 */
+  }
+  .fixed.inset-0.z-50 .relative.bg-background-primary .text-foreground-tertiary {
+    color: #94A3B8; /* slate-400 */
+  }
+
+  /* Inputs/selects/textareas dentro do modal escuro */
+  .fixed.inset-0.z-50 .relative.bg-background-primary input:not([type="checkbox"]):not([type="radio"]),
+  .fixed.inset-0.z-50 .relative.bg-background-primary select,
+  .fixed.inset-0.z-50 .relative.bg-background-primary textarea {
+    background-color: rgba(15, 23, 42, 0.4); /* slate-900/40 */
+    border-color: rgba(71, 85, 105, 0.6);
+    color: #FFFFFF;
+  }
+  .fixed.inset-0.z-50 .relative.bg-background-primary input::placeholder,
+  .fixed.inset-0.z-50 .relative.bg-background-primary textarea::placeholder {
+    color: #94A3B8;
+  }
+
+  /* Bordas/divisores genericos no modal escuro */
+  .fixed.inset-0.z-50 .relative.bg-background-primary .border-border {
+    border-color: rgba(71, 85, 105, 0.4);
+  }
+
+  /* Botao secundario "Cancelar" no modal escuro: torna texto legivel */
+  .fixed.inset-0.z-50 .relative.bg-background-primary button.text-foreground-secondary {
+    color: #E2E8F0;
+  }
+
+  /* Hover de itens em listas dentro do modal */
+  .fixed.inset-0.z-50 .relative.bg-background-primary .hover\:bg-background-tertiary:hover {
+    background-color: rgba(71, 85, 105, 0.4);
+  }
 }
 
 @layer utilities {
