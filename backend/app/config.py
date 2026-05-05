@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     EVOLUTION_INSTANCE_NAME: str = "tatica-gestap"
     WHATSAPP_WEBHOOK_SECRET: str = ""
 
+    # Empresa-flow webhook (eventos vindos do Supabase Financeiro)
+    EMPRESA_FLOW_WEBHOOK_SECRET: str = ""
+
     # Instagram Graph API (Facebook Graph API v21.0)
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
