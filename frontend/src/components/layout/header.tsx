@@ -58,7 +58,7 @@ export function Header() {
     : { name: "Usuário" };
 
   return (
-    <header className="h-14 bg-background-header border-b border-slate-700/40 flex items-center justify-between px-5 shrink-0 sticky top-0 z-10">
+    <header className="h-16 bg-background-header border-b border-slate-700/40 flex items-center justify-between px-6 shrink-0 sticky top-0 z-10">
       {/* Search trigger (opens command palette) */}
       <div className="flex items-center gap-3 flex-1 max-w-sm">
         <button

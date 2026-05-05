@@ -214,7 +214,7 @@ export function Sidebar() {
       `}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-slate-700/40">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700/40">
         <div className="flex items-center gap-2.5 min-w-0">
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none" className="shrink-0">
             <rect x="3" y="3" width="19" height="19" rx="4" fill="#5570e8" />
