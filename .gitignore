@@ -41,6 +41,13 @@ docker-compose.override.yml
 uploads/
 *.log
 
+# Database dumps / backups (binarios grandes, dados sensiveis)
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+
 # Coverage
 htmlcov/
 .coverage
