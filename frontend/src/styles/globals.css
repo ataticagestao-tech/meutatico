@@ -5,10 +5,14 @@
 :root {
   /* ═══ TATICA Brand v8 — Sidebar/Header escuros, conteudo branco ═══ */
 
-  /* Background — branco no conteudo, cinza escuro nas chrome (sidebar/header) */
+  /* Background:
+     - bg-primary (BRANCO) → cards / superficies elevadas
+     - bg-secondary (cinza claro) → fundo do main, cria contraste com cards
+     - bg-tertiary → hover/inactive surfaces
+     - bg-sidebar/header → cinza escuro (chrome) */
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F8FAFC;
-  --color-bg-tertiary: #F1F5F9;
+  --color-bg-secondary: #F1F5F9;
+  --color-bg-tertiary: #E2E8F0;
   --color-bg-sidebar: #1F2937;
   --color-bg-header: #1F2937;
 
@@ -18,7 +22,7 @@
   --color-text-tertiary: #4A4A4A;
   --color-text-inverse: #FFFFFF;
 
-  /* Bordas — visíveis no fundo claro */
+  /* Bordas — sutis mas presentes no fundo claro */
   --color-border: #E2E8F0;
   --color-border-focus: #3b5bdb;
 
@@ -52,10 +56,10 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
+  /* Shadows — sutis mas perceptiveis sobre branco/cinza claro */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.10), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
 }
 
 [data-theme="dark"] {
@@ -80,6 +84,17 @@
 
   body {
     @apply bg-background-secondary text-foreground-primary font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Cards com fundo primario + border + rounded ganham shadow sutil automaticamente.
+     Isso cria separacao visual entre o card branco e o fundo slate-100 do main.
+     Hover do Tailwind (hover:shadow-md, etc) sobrepoe naturalmente. */
+  .bg-background-primary.border-border.rounded-xl,
+  .bg-background-primary.border-border.rounded-2xl,
+  .bg-background-primary.border-border.rounded-lg {
+    box-shadow: var(--shadow-sm);
   }
 }
 

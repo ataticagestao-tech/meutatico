@@ -221,7 +221,7 @@ export default function DashboardPage() {
           <button
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className={`bg-background-primary border border-border rounded-xl p-5 flex items-center gap-4 hover:shadow-md hover:ring-2 ${stat.ring} transition-all text-left group`}
+            className={`bg-background-primary border border-border rounded-xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md hover:ring-2 ${stat.ring} transition-all text-left group`}
           >
             <div className={`p-3 rounded-xl ${stat.bg} group-hover:scale-105 transition-transform`}>
               <stat.icon size={26} className={stat.color} />
